@@ -121,7 +121,7 @@ with st.sidebar.form("subject_input_form"):
 if 'user_subjects' not in st.session_state:
     st.session_state.user_subjects = []
 
-with st.sidebar.form("subject_input_form", clear_on_submit=True):
+with st.sidebar.form("unique_subject_input_form", clear_on_submit=True):
     sub_name = st.text_input("Subject Name (e.g. Biology)")
     top_name = st.text_input("Topic Name (e.g. Genetics)")
     diff = st.slider("Difficulty (1-5)", 1, 5, 3)
