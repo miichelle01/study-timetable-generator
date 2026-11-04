@@ -85,38 +85,44 @@ def generate_timetable(subjects: List[Subject], available_slots: List[StudySlot]
 # --- STREAMLIT UI ---
 st.title("📚Study Timetable Generator📚")
 st.caption("##### *Plan better. Ace your exams.*")
-st.divider()  # <--- Creates a thin line here
+st.divider()  
 
 # Main content starts cleanly below the line:
 st.subheader("Your Generated Timetable")
 
 # Sidebar controls for availability
-st.sidebar.header("Your Study Hours & Schedule")
-num_days = st.sidebar.slider("Days to cover:", min_value=3, max_value=30, value=7)
-start_hour = st.sidebar.slider("Daily Start Hour (24h):", min_value=8, max_value=20, value=15)
-end_hour = st.sidebar.slider("Daily End Hour (24h):", min_value=start_hour + 2, max_value=23, value=20)
-
 st.sidebar.divider()
-st.sidebar.header("Add Your Subjects")
+st.sidebar.header("Your Subjects")
 
-with st.sidebar.form("subject_input_form"):
-    sub_name = st.text_input("Subject Name (e.g. Biology)")
-    top_name = st.text_input("Topic Name (e.g. Genetics)")
-    diff = st.slider("Difficulty (1-5)", 1, 5, 3)
-    
-    # This prevents selecting dates in the past
-    ex_date = st.date_input("Exam Date", min_value=date.today())
-    
-    submitted = st.form_submit_button("Add Subject")
-    if submitted and sub_name:
-        st.session_state.user_subjects.append({
-            "subject": sub_name,
-            "topic": top_name,
-            "difficulty": diff,
-            "exam_date": str(ex_date)
-        })
-        st.success(f"Added {sub_name}!")
+# Ask how many subjects they want to add
+num_subjects = st.sidebar.number_input("How many subjects?", min_value=1, max_value=10, value=2, step=1)
 
+if "user_subjects" not in st.session_state:
+    st.session_state.user_subjects = []
+
+with st.sidebar.form("unique_subject_input_form"):
+    subject_data_list = []
+    
+    for i in range(int(num_subjects)):
+        st.markdown(f"**Subject {i+1}**")
+        sub_name = st.text_input(f"Subject Name {i+1}", key=f"sub_name_{i}")
+        top_name = st.text_input(f"Topic Name {i+1}", key=f"top_name_{i}")
+        diff = st.slider(f"Difficulty {i+1} (1-5)", 1, 5, 3, key=f"diff_{i}")
+        ex_date = st.date_input(f"Exam Date {i+1}", min_value=date.today(), key=f"date_{i}")
+        
+        if sub_name:
+            subject_data_list.append({
+                "subject": sub_name,
+                "topic": top_name,
+                "difficulty": diff,
+                "exam_date": str(ex_date)
+            })
+        st.divider()
+
+    submitted = st.form_submit_button("Save All Subjects")
+    if submitted:
+        st.session_state.user_subjects = subject_data_list
+        st.success(f"Successfully saved {len(subject_data_list)} subjects!")
 # Initialize session state for user-added subjects
 if 'user_subjects' not in st.session_state:
     st.session_state.user_subjects = []
