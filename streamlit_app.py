@@ -99,8 +99,8 @@ end_hour = st.sidebar.slider("Daily End Hour (24h):", min_value=start_hour + 2, 
 st.sidebar.divider()
 st.sidebar.header("Your Subjects & Topics")
 
-# Ask how many subjects they want to add
-num_subjects = st.sidebar.number_input("How many subjects?", min_value=1, max_value=10, value=2, step=1, key="num_subjects_input")
+# Default to 1 subject
+num_subjects = st.sidebar.number_input("How many subjects?", min_value=1, max_value=10, value=1, step=1, key="num_subjects_input")
 
 if "user_subjects" not in st.session_state:
     st.session_state.user_subjects = []
@@ -109,12 +109,12 @@ all_subject_tasks = []
 
 # Loop through each subject
 for i in range(int(num_subjects)):
-    st.markdown(f"### Subject {i+1}")
-    sub_name = st.text_input("Subject Name (e.g. Biology)", key=f"sub_name_{i}")
-    ex_date = st.date_input("Exam Date", min_value=date.today(), key=f"date_{i}")
+    st.sidebar.markdown(f"### Subject {i+1}")
+    sub_name = st.sidebar.text_input(f"Subject Name {i+1}", key=f"sub_name_{i}")
+    ex_date = st.sidebar.date_input(f"Exam Date {i+1}", min_value=date.today(), key=f"date_{i}")
     
-    # 💡 Moved OUTSIDE the form so it dynamically updates the fields on change!
-    num_topics = st.number_input(f"How many topics for Subject {i+1}?", min_value=1, max_value=10, value=2, step=1, key=f"num_topics_{i}")
+    # Default to 1 topic per subject
+    num_topics = st.sidebar.number_input(f"How many topics for Subject {i+1}?", min_value=1, max_value=10, value=1, step=1, key=f"num_topics_{i}")
     
     with st.sidebar.form(key=f"subject_form_{i}"):
         subject_topics = []
