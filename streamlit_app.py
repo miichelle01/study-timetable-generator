@@ -83,8 +83,12 @@ def generate_timetable(subjects: List[Subject], available_slots: List[StudySlot]
     return available_slots
 
 # --- STREAMLIT UI ---
-st.title("Study Timetable Generator")
-st.write("##### *Plan better. Ace your exams.*")
+st.title("📚Study Timetable Generator📚")
+st.caption("##### *Plan better. Ace your exams.*")
+st.divider()  # <--- Creates a thin line here
+
+# Main content starts cleanly below the line:
+st.subheader("Your Generated Schedule")
 
 # Sidebar controls for availability
 st.sidebar.header("Your Study Hours & Schedule")
