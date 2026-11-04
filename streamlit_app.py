@@ -83,14 +83,37 @@ def generate_timetable(subjects: List[Subject], available_slots: List[StudySlot]
     return available_slots
 
 # --- STREAMLIT UI ---
-st.title("📚 AEP Study Timetable Generator")
+st.title("Study Timetable Generator")
 st.write("Generate a custom, priority-weighted study schedule optimized for your exam deadlines!")
 
 # Sidebar controls for availability
-st.sidebar.header("🗓️ Availability Settings")
+st.sidebar.header("Your Study Hours & Schedule")
 num_days = st.sidebar.slider("Days to cover:", min_value=3, max_value=30, value=7)
 start_hour = st.sidebar.slider("Daily Start Hour (24h):", min_value=8, max_value=20, value=15)
 end_hour = st.sidebar.slider("Daily End Hour (24h):", min_value=start_hour + 2, max_value=23, value=20)
+
+st.sidebar.divider()
+st.sidebar.header("Add Your Subjects")
+
+# Initialize session state for user-added subjects
+if 'user_subjects' not in st.session_state:
+    st.session_state.user_subjects = []
+
+with st.sidebar.form("subject_input_form"):
+    sub_name = st.text_input("Subject Name (e.g. Biology)")
+    top_name = st.text_input("Topic Name (e.g. Genetics)")
+    diff = st.slider("Difficulty (1-5)", 1, 5, 3)
+    ex_date = st.date_input("Exam Date")
+    
+    submitted = st.form_submit_button("Add Subject")
+    if submitted and sub_name:
+        st.session_state.user_subjects.append({
+            "subject": sub_name,
+            "topic": top_name,
+            "difficulty": diff,
+            "exam_date": str(ex_date)
+        })
+        st.success(f"Added {sub_name}!")
 
 # Sample data option
 use_sample = st.checkbox("Use Sample Data (Math & Physics)", value=True)

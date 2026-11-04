@@ -83,7 +83,7 @@ def generate_timetable(subjects: List[Subject], available_slots: List[StudySlot]
     return available_slots
 
 # --- STREAMLIT UI ---
-st.title("📚 AEP Study Timetable Generator")
+st.title("Study Timetable Generator")
 st.write("Generate a custom, priority-weighted study schedule optimized for your exam deadlines!")
 
 # Sidebar controls for availability
@@ -118,7 +118,7 @@ if use_sample:
 else:
     st.info("Custom subject entry is best managed via code, or you can keep sample data checked for your live demo!")
 
-if st.button("Generate Timetable 🚀"):
+if st.button("Generate Your Timetable"):
     today = date.today()
     slots = generate_available_slots(today, num_days, start_hour, end_hour)
     schedule = generate_timetable(subjects, slots)
