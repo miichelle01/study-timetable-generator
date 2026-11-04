@@ -115,36 +115,49 @@ with st.sidebar.form("subject_input_form"):
         })
         st.success(f"Added {sub_name}!")
 
-# Sample data option
-use_sample = st.checkbox("Use Sample Data (Math & Physics)", value=True)
-
-subjects = []
-if use_sample:
-    today = date.today()
-    math_exam = Subject(
-        name="Mathematics",
-        exam_date=today + timedelta(days=7),
-        topics=[
-            Topic(name="Calculus Integration", difficulty=5, estimated_hours=4.0),
-            Topic(name="Trigonometry", difficulty=3, estimated_hours=2.0)
-        ]
-    )
-    physics_exam = Subject(
-        name="Physics",
-        exam_date=today + timedelta(days=4),
-        topics=[
-            Topic(name="Electromagnetism", difficulty=5, estimated_hours=3.0),
-            Topic(name="Kinematics", difficulty=2, estimated_hours=2.0)
-        ]
-    )
-    subjects = [math_exam, physics_exam]
-else:
-    st.info("Custom subject entry is best managed via code, or you can keep sample data checked for your live demo!")
-
-if st.button("Generate Timetable 🚀"):
+if st.button("Generate Your Timetable"):
     today = date.today()
     slots = generate_available_slots(today, num_days, start_hour, end_hour)
-    schedule = generate_timetable(subjects, slots)
+    
+    # Check if the student has added any subjects first
+    if not st.session_state.get('user_subjects'):
+        st.warning("Please add at least one subject in the sidebar before generating your timetable!")
+    else:
+        # Convert student input dicts back into your Subject objects so your algorithm understands them
+        student_subjects = []
+        for s in st.session_state.user_subjects:
+            # Create a Topic object for the subject
+            topic_obj = Topic(
+                name=s["topic"], 
+                difficulty=s["difficulty"], 
+                estimated_hours=2.0  # Default study hours per topic slot
+            )
+            # Create the Subject object with the parsed exam date
+            sub_obj = Subject(
+                name=s["subject"], 
+                exam_date=datetime.strptime(s["exam_date"], "%Y-%m-%d").date(), 
+                topics=[topic_obj]
+            )
+            student_subjects.append(sub_obj)
+            
+        # Now generate the timetable using the student's custom subjects!
+        schedule = generate_timetable(student_subjects, slots)
+        
+        # Format for display
+        results = []
+        for slot in schedule:
+            if slot.assigned_subject:
+                results.append({
+                    "Date": str(slot.date),
+                    "Time": f"{slot.start_hour}:00 - {slot.end_hour}:00",
+                    "Subject": slot.assigned_subject,
+                    "Topic": slot.assigned_topic
+                })
+                
+        if results:
+            df = pd.DataFrame(results)
+            st.success("Timetable generated successfully!")
+            st.dataframe(df, use_container_width=True)
     
     # Format for display
     results = []
