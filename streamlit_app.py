@@ -1,6 +1,6 @@
 import streamlit as st
 from dataclasses import dataclass, field
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import List
 import pandas as pd
 
@@ -99,6 +99,24 @@ end_hour = st.sidebar.slider("Daily End Hour (24h):", min_value=start_hour + 2, 
 st.sidebar.divider()
 st.sidebar.header("Add Your Subjects")
 
+with st.sidebar.form("subject_input_form"):
+    sub_name = st.text_input("Subject Name (e.g. Biology)")
+    top_name = st.text_input("Topic Name (e.g. Genetics)")
+    diff = st.slider("Difficulty (1-5)", 1, 5, 3)
+    
+    # This prevents selecting dates in the past
+    ex_date = st.date_input("Exam Date", min_value=date.today())
+    
+    submitted = st.form_submit_button("Add Subject")
+    if submitted and sub_name:
+        st.session_state.user_subjects.append({
+            "subject": sub_name,
+            "topic": top_name,
+            "difficulty": diff,
+            "exam_date": str(ex_date)
+        })
+        st.success(f"Added {sub_name}!")
+        
 # Initialize session state for user-added subjects
 if 'user_subjects' not in st.session_state:
     st.session_state.user_subjects = []
