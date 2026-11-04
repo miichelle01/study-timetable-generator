@@ -109,14 +109,14 @@ all_subject_tasks = []
 
 # Loop through each subject
 for i in range(int(num_subjects)):
+    st.markdown(f"### Subject {i+1}")
+    sub_name = st.text_input("Subject Name (e.g. Biology)", key=f"sub_name_{i}")
+    ex_date = st.date_input("Exam Date", min_value=date.today(), key=f"date_{i}")
+    
+    # 💡 Moved OUTSIDE the form so it dynamically updates the fields on change!
+    num_topics = st.number_input(f"How many topics for Subject {i+1}?", min_value=1, max_value=10, value=2, step=1, key=f"num_topics_{i}")
+    
     with st.sidebar.form(key=f"subject_form_{i}"):
-        st.markdown(f"### Subject {i+1}")
-        sub_name = st.text_input("Subject Name (e.g. Biology)", key=f"sub_name_{i}")
-        ex_date = st.date_input("Exam Date", min_value=date.today(), key=f"date_{i}")
-        
-        # Ask how many topics for this specific subject
-        num_topics = st.number_input("How many topics for this subject?", min_value=1, max_value=10, value=2, step=1, key=f"num_topics_{i}")
-        
         subject_topics = []
         for j in range(int(num_topics)):
             st.markdown(f"**Topic {j+1}**")
@@ -135,10 +135,11 @@ for i in range(int(num_subjects)):
         if submitted and sub_name:
             all_subject_tasks.extend(subject_topics)
             st.success(f"Saved {sub_name} with {len(subject_topics)} topics!")
+    
+    st.sidebar.divider()
 
 if all_subject_tasks:
     st.session_state.user_subjects = all_subject_tasks
-
 if st.button("Generate Your Timetable"):
     today = date.today()
     slots = generate_available_slots(today, num_days, start_hour, end_hour)
