@@ -91,6 +91,11 @@ st.divider()
 st.subheader("Your Generated Timetable")
 
 # Sidebar controls for availability
+st.sidebar.header("Timetable Settings")
+num_days = st.sidebar.slider("Days to cover:", min_value=3, max_value=30, value=7)
+start_hour = st.sidebar.slider("Daily Start Hour (24h):", min_value=8, max_value=20, value=15)
+end_hour = st.sidebar.slider("Daily End Hour (24h):", min_value=start_hour + 2, max_value=23, value=20)
+
 st.sidebar.divider()
 st.sidebar.header("Your Subjects")
 
