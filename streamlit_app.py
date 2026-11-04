@@ -97,7 +97,7 @@ start_hour = st.sidebar.slider("Daily Start Hour (24h):", min_value=8, max_value
 end_hour = st.sidebar.slider("Daily End Hour (24h):", min_value=start_hour + 2, max_value=23, value=20)
 
 st.sidebar.divider()
-st.sidebar.header("Your Subjects")
+st.sidebar.header("Your Subjects & Topics")
 
 # Ask how many subjects they want to add
 num_subjects = st.sidebar.number_input("How many subjects?", min_value=1, max_value=10, value=2, step=1, key="num_subjects_input")
@@ -105,29 +105,39 @@ num_subjects = st.sidebar.number_input("How many subjects?", min_value=1, max_va
 if "user_subjects" not in st.session_state:
     st.session_state.user_subjects = []
 
-subject_data_list = []
+all_subject_tasks = []
 
-# Loop to generate an individual form for each subject securely
+# Loop through each subject
 for i in range(int(num_subjects)):
     with st.sidebar.form(key=f"subject_form_{i}"):
-        st.markdown(f"**Subject {i+1}**")
-        sub_name = st.text_input(f"Subject Name {i+1}", key=f"sub_name_{i}")
-        top_name = st.text_input(f"Topic Name {i+1}", key=f"top_name_{i}")
-        diff = st.slider(f"Difficulty {i+1} (1-5)", 1, 5, 3, key=f"diff_{i}")
-        ex_date = st.date_input(f"Exam Date {i+1}", min_value=date.today(), key=f"date_{i}")
+        st.markdown(f"### Subject {i+1}")
+        sub_name = st.text_input("Subject Name (e.g. Biology)", key=f"sub_name_{i}")
+        ex_date = st.date_input("Exam Date", min_value=date.today(), key=f"date_{i}")
+        
+        # Ask how many topics for this specific subject
+        num_topics = st.number_input("How many topics for this subject?", min_value=1, max_value=10, value=2, step=1, key=f"num_topics_{i}")
+        
+        subject_topics = []
+        for j in range(int(num_topics)):
+            st.markdown(f"**Topic {j+1}**")
+            top_name = st.text_input(f"Topic Name {j+1}", key=f"top_name_{i}_{j}")
+            diff = st.slider(f"Difficulty {j+1} (1-5)", 1, 5, 3, key=f"diff_{i}_{j}")
+            
+            if top_name:
+                subject_topics.append({
+                    "subject": sub_name,
+                    "topic": top_name,
+                    "difficulty": diff,
+                    "exam_date": str(ex_date)
+                })
         
         submitted = st.form_submit_button(f"Save Subject {i+1}")
         if submitted and sub_name:
-            subject_data_list.append({
-                "subject": sub_name,
-                "topic": top_name,
-                "difficulty": diff,
-                "exam_date": str(ex_date)
-            })
-            st.success(f"Saved {sub_name}!")
+            all_subject_tasks.extend(subject_topics)
+            st.success(f"Saved {sub_name} with {len(subject_topics)} topics!")
 
-if subject_data_list:
-    st.session_state.user_subjects = subject_data_list
+if all_subject_tasks:
+    st.session_state.user_subjects = all_subject_tasks
 
 if st.button("Generate Your Timetable"):
     today = date.today()
