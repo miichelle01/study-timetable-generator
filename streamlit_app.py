@@ -116,16 +116,17 @@ with st.sidebar.form("subject_input_form"):
             "exam_date": str(ex_date)
         })
         st.success(f"Added {sub_name}!")
-        
+
 # Initialize session state for user-added subjects
 if 'user_subjects' not in st.session_state:
     st.session_state.user_subjects = []
 
-with st.sidebar.form("subject_input_form"):
+with st.sidebar.form("subject_input_form", clear_on_submit=True):
     sub_name = st.text_input("Subject Name (e.g. Biology)")
     top_name = st.text_input("Topic Name (e.g. Genetics)")
     diff = st.slider("Difficulty (1-5)", 1, 5, 3)
-    ex_date = st.date_input("Exam Date")
+    
+    ex_date = st.date_input("Exam Date", min_value=date.today())
     
     submitted = st.form_submit_button("Add Subject")
     if submitted and sub_name:
