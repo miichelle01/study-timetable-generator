@@ -100,7 +100,7 @@ st.sidebar.divider()
 st.sidebar.header("Your Subjects & Topics")
 
 # Default to 1 subject
-num_subjects = st.sidebar.number_input("How many subjects?", min_value=1, max_value=10, value=1, step=1, key="num_subjects_input")
+num_subjects = st.sidebar.number_input("How many subjects?", min_value=1, max_value=9, value=1, step=1, key="num_subjects_input")
 
 if "user_subjects" not in st.session_state:
     st.session_state.user_subjects = []
