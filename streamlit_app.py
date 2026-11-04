@@ -90,8 +90,10 @@ st.divider()
 # Sidebar controls for availability
 st.sidebar.header("Timetable Settings")
 num_days = st.sidebar.slider("Days to cover:", min_value=3, max_value=30, value=7)
-start_hour = st.sidebar.slider("Daily Start Hour (24h):", min_value=8, max_value=20, value=15)
-end_hour = st.sidebar.slider("Daily End Hour (24h):", min_value=start_hour + 2, max_value=23, value=20)
+
+# Completely independent start and end hour sliders (0 to 23)
+start_hour = st.sidebar.slider("Daily Start Hour (24h):", min_value=0, max_value=23, value=9)
+end_hour = st.sidebar.slider("Daily End Hour (24h):", min_value=0, max_value=23, value=17)
 
 st.sidebar.divider()
 st.sidebar.header("Your Subjects & Topics")
@@ -99,10 +101,9 @@ st.sidebar.header("Your Subjects & Topics")
 # Default to 1 subject
 num_subjects = st.sidebar.number_input("How many subjects?", min_value=1, max_value=9, value=1, step=1, key="num_subjects_input")
 
-if "user_subjects" not in st.session_state:
-    st.session_state.user_subjects = []
-
-all_subject_tasks = []
+# Initialize dictionary to persist all saved subjects independently
+if "saved_subjects" not in st.session_state:
+    st.session_state.saved_subjects = {}
 
 # Loop through each subject
 for i in range(int(num_subjects)):
@@ -110,7 +111,6 @@ for i in range(int(num_subjects)):
     sub_name = st.sidebar.text_input(f"Subject Name {i+1}", key=f"sub_name_{i}")
     ex_date = st.sidebar.date_input(f"Exam Date {i+1}", min_value=date.today(), key=f"date_{i}")
     
-    # Default to 1 topic per subject
     num_topics = st.sidebar.number_input(f"How many topics for Subject {i+1}?", min_value=1, max_value=10, value=1, step=1, key=f"num_topics_{i}")
     
     with st.sidebar.form(key=f"subject_form_{i}"):
@@ -130,77 +130,82 @@ for i in range(int(num_subjects)):
         
         submitted = st.form_submit_button(f"Save Subject {i+1}")
         if submitted and sub_name:
-            all_subject_tasks.extend(subject_topics)
+            st.session_state.saved_subjects[i] = subject_topics
             st.success(f"Saved {sub_name} with {len(subject_topics)} topics!")
     
     st.sidebar.divider()
-
-if all_subject_tasks:
-    st.session_state.user_subjects = all_subject_tasks
 
 # --- MAIN SCREEN GENERATION ---
 st.subheader("Your Generated Timetable")
 
 if st.button("Generate Your Timetable", type="primary"):
-    today = date.today()
-    slots = generate_available_slots(today, num_days, start_hour, end_hour)
-    
-    # Check if the student has added any subjects first
-    if not st.session_state.get('user_subjects'):
-        st.warning("Please add and save at least one subject in the sidebar before generating your timetable!")
+    # Validate that end hour makes sense relative to start hour
+    if end_hour <= start_hour:
+        st.error("⚠️ Daily End Hour must be later than Daily Start Hour! Please adjust your sidebar settings.")
     else:
-        # Group topics by subject so multiple topics per subject are preserved correctly
-        subject_dict = {}
-        for s in st.session_state.user_subjects:
-            s_name = s["subject"]
-            if s_name not in subject_dict:
-                subject_dict[s_name] = {
-                    "exam_date": datetime.strptime(s["exam_date"], "%Y-%m-%d").date(),
-                    "topics": []
-                }
-            
-            topic_obj = Topic(
-                name=s["topic"], 
-                difficulty=s["difficulty"], 
-                estimated_hours=2.0
-            )
-            subject_dict[s_name]["topics"].append(topic_obj)
-            
-        # Convert into Subject objects for your algorithm
-        student_subjects = []
-        for sub_name, data in subject_dict.items():
-            student_subjects.append(Subject(
-                name=sub_name,
-                exam_date=data["exam_date"],
-                topics=data["topics"]
-            ))
-            
-        # Generate the timetable
-        schedule = generate_timetable(student_subjects, slots)
+        today = date.today()
+        slots = generate_available_slots(today, num_days, start_hour, end_hour)
         
-        # Format for display
-        results = []
-        for slot in schedule:
-            if slot.assigned_subject:
-                results.append({
-                    "Date": str(slot.date),
-                    "Time": f"{slot.start_hour}:00 - {slot.end_hour}:00",
-                    "Subject": slot.assigned_subject,
-                    "Topic": slot.assigned_topic
-                })
-                
-        if results:
-            df = pd.DataFrame(results)
-            st.success("Timetable generated successfully!")
-            st.dataframe(df, use_container_width=True, hide_index=True)
+        # Combine all topics from all saved subjects in session state dictionary
+        all_combined_tasks = []
+        for sub_idx, topics in st.session_state.saved_subjects.items():
+            all_combined_tasks.extend(topics)
             
-            # Download CSV button
-            csv = df.to_csv(index=False).encode('utf-8')
-            st.download_button(
-                label="📥 Download Timetable as CSV",
-                data=csv,
-                file_name="my_study_timetable.csv",
-                mime="text/csv",
-            )
+        if not all_combined_tasks:
+            st.warning("Please add and save at least one subject in the sidebar before generating your timetable!")
         else:
-            st.warning("Not enough available slots to fit the required study hours. Try increasing your daily study window or days!")
+            # Group topics by subject so multiple topics per subject are preserved correctly
+            subject_dict = {}
+            for s in all_combined_tasks:
+                s_name = s["subject"]
+                if s_name not in subject_dict:
+                    subject_dict[s_name] = {
+                        "exam_date": datetime.strptime(s["exam_date"], "%Y-%m-%d").date(),
+                        "topics": []
+                    }
+                
+                topic_obj = Topic(
+                    name=s["topic"], 
+                    difficulty=s["difficulty"], 
+                    estimated_hours=2.0
+                )
+                subject_dict[s_name]["topics"].append(topic_obj)
+                
+            # Convert into Subject objects for your algorithm
+            student_subjects = []
+            for sub_name, data in subject_dict.items():
+                student_subjects.append(Subject(
+                    name=sub_name,
+                    exam_date=data["exam_date"],
+                    topics=data["topics"]
+                ))
+                
+            # Generate the timetable
+            schedule = generate_timetable(student_subjects, slots)
+            
+            # Format for display
+            results = []
+            for slot in schedule:
+                if slot.assigned_subject:
+                    results.append({
+                        "Date": str(slot.date),
+                        "Time": f"{slot.start_hour}:00 - {slot.end_hour}:00",
+                        "Subject": slot.assigned_subject,
+                        "Topic": slot.assigned_topic
+                    })
+                    
+            if results:
+                df = pd.DataFrame(results)
+                st.success("Timetable generated successfully!")
+                st.dataframe(df, use_container_width=True, hide_index=True)
+                
+                # Download CSV button
+                csv = df.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    label="📥 Download Timetable as CSV",
+                    data=csv,
+                    file_name="my_study_timetable.csv",
+                    mime="text/csv",
+                )
+            else:
+                st.warning("Not enough available study slots to fit the required hours. Try widening your daily time window or increasing your total days!")
