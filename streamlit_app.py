@@ -83,12 +83,9 @@ def generate_timetable(subjects: List[Subject], available_slots: List[StudySlot]
     return available_slots
 
 # --- STREAMLIT UI ---
-st.title("📚Study Timetable Generator📚")
+st.title("📚 Study Timetable Generator 📚")
 st.caption("##### *Plan better. Ace your exams.*")
 st.divider()  
-
-# Main content starts cleanly below the line:
-st.subheader("Your Generated Timetable")
 
 # Sidebar controls for availability
 st.sidebar.header("Timetable Settings")
@@ -140,32 +137,45 @@ for i in range(int(num_subjects)):
 
 if all_subject_tasks:
     st.session_state.user_subjects = all_subject_tasks
-if st.button("Generate Your Timetable"):
+
+# --- MAIN SCREEN GENERATION ---
+st.subheader("Your Generated Timetable")
+
+if st.button("Generate Your Timetable", type="primary"):
     today = date.today()
     slots = generate_available_slots(today, num_days, start_hour, end_hour)
     
     # Check if the student has added any subjects first
     if not st.session_state.get('user_subjects'):
-        st.warning("Please add at least one subject in the sidebar before generating your timetable!")
+        st.warning("Please add and save at least one subject in the sidebar before generating your timetable!")
     else:
-        # Convert student input dicts back into your Subject objects so your algorithm understands them
-        student_subjects = []
+        # Group topics by subject so multiple topics per subject are preserved correctly
+        subject_dict = {}
         for s in st.session_state.user_subjects:
-            # Create a Topic object for the subject
+            s_name = s["subject"]
+            if s_name not in subject_dict:
+                subject_dict[s_name] = {
+                    "exam_date": datetime.strptime(s["exam_date"], "%Y-%m-%d").date(),
+                    "topics": []
+                }
+            
             topic_obj = Topic(
                 name=s["topic"], 
                 difficulty=s["difficulty"], 
-                estimated_hours=2.0  # Default study hours per topic slot
+                estimated_hours=2.0
             )
-            # Create the Subject object with the parsed exam date
-            sub_obj = Subject(
-                name=s["subject"], 
-                exam_date=datetime.strptime(s["exam_date"], "%Y-%m-%d").date(), 
-                topics=[topic_obj]
-            )
-            student_subjects.append(sub_obj)
+            subject_dict[s_name]["topics"].append(topic_obj)
             
-        # Now generate the timetable using the student's custom subjects!
+        # Convert into Subject objects for your algorithm
+        student_subjects = []
+        for sub_name, data in subject_dict.items():
+            student_subjects.append(Subject(
+                name=sub_name,
+                exam_date=data["exam_date"],
+                topics=data["topics"]
+            ))
+            
+        # Generate the timetable
         schedule = generate_timetable(student_subjects, slots)
         
         # Format for display
@@ -182,31 +192,15 @@ if st.button("Generate Your Timetable"):
         if results:
             df = pd.DataFrame(results)
             st.success("Timetable generated successfully!")
-            st.dataframe(df, use_container_width=True)
-    
-    # Format for display
-    results = []
-    for slot in schedule:
-        if slot.assigned_subject:
-            results.append({
-                "Date": str(slot.date),
-                "Time": f"{slot.start_hour}:00 - {slot.end_hour}:00",
-                "Subject": slot.assigned_subject,
-                "Topic": slot.assigned_topic
-            })
+            st.dataframe(df, use_container_width=True, hide_index=True)
             
-    if results:
-        df = pd.DataFrame(results)
-        st.success("Timetable generated successfully!")
-        st.dataframe(df, use_container_width=True)
-        
-        # Download CSV button
-        csv = df.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label="📥 Download Timetable as CSV",
-            data=csv,
-            file_name="my_study_timetable.csv",
-            mime="text/csv",
-        )
-    else:
-        st.warning("Not enough available slots to fit the required study hours. Try increasing your daily study window or days!")
+            # Download CSV button
+            csv = df.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                label="📥 Download Timetable as CSV",
+                data=csv,
+                file_name="my_study_timetable.csv",
+                mime="text/csv",
+            )
+        else:
+            st.warning("Not enough available slots to fit the required study hours. Try increasing your daily study window or days!")
