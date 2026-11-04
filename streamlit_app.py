@@ -88,7 +88,7 @@ st.caption("##### *Plan better. Ace your exams.*")
 st.divider()  # <--- Creates a thin line here
 
 # Main content starts cleanly below the line:
-st.subheader("Your Generated Schedule")
+st.subheader("Your Generated Timetable")
 
 # Sidebar controls for availability
 st.sidebar.header("Your Study Hours & Schedule")
