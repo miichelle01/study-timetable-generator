@@ -77,7 +77,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                 schedule_items.append(ScheduleItem(
                     time_str=f"{start_t} - {end_t}",
                     subject="🍽️ Meal Break",
-                    topic=f"Lunch Break ({lunch_mins} mins)",
+                    topic="",
                     exam_date="-",
                     is_break=True
                 ))
@@ -95,7 +95,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                 schedule_items.append(ScheduleItem(
                     time_str=f"{start_t} - {end_t}",
                     subject="🍽️ Meal Break",
-                    topic=f"Dinner Break ({lunch_mins} mins)",
+                    topic="",
                     exam_date="-",
                     is_break=True
                 ))
@@ -145,7 +145,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     schedule_items.append(ScheduleItem(
                         time_str=f"{s_start} - {s_end}",
                         subject="☕ Short Break",
-                        topic=f"Short Break ({short_break_mins} mins)",
+                        topic="",
                         exam_date="-",
                         is_break=True
                     ))
@@ -162,7 +162,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     schedule_items.append(ScheduleItem(
                         time_str=f"{l_start} - {l_end}",
                         subject="🧘 Long Break",
-                        topic=f"Intensive Study Rest Break ({long_break_mins} mins)",
+                        topic="",
                         exam_date="-",
                         is_break=True
                     ))
@@ -296,8 +296,12 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                     
                     def color_rows(row):
                         subj = row['Subject']
-                        if "Break" in subj:
-                            return ['background-color: #f5f5f5; color: #666666; font-style: italic;' for _ in row]
+                        if "Meal Break" in subj:
+                            return ['background-color: #fffde7; color: #795548; font-style: italic;' for _ in row] # Soft Yellow/Cream
+                        elif "Short Break" in subj:
+                            return ['background-color: #fff8e1; color: #f57f17; font-style: italic;' for _ in row] # Soft Warm Amber
+                        elif "Long Break" in subj:
+                            return ['background-color: #e0f2f1; color: #00796b; font-style: italic;' for _ in row] # Soft Teal
                         return [color_map.get(subj, '') for _ in row]
                     
                     return dataframe.style.apply(color_rows, axis=1)
