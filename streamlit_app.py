@@ -87,47 +87,80 @@ def generate_timetable(subjects: List[Subject], available_slots: List[StudySlot]
 
 # --- STREAMLIT UI ---
 st.title("📚 Study Timetable Generator 📚")
-st.caption("##### *Plan better. Ace your exams.*")
+st.caption("##### *Plan better. Ace your exams with custom analytics & scheduling.*")
 st.divider()  
 
 # Sidebar controls for availability
 st.sidebar.header("Timetable Settings")
 num_days = st.sidebar.slider("Days to cover:", min_value=3, max_value=30, value=7)
 
-# Completely independent start and end hour sliders (0 to 23)
 start_hour = st.sidebar.slider("Daily Start Hour (24h):", min_value=0, max_value=23, value=9)
 end_hour = st.sidebar.slider("Daily End Hour (24h):", min_value=0, max_value=23, value=17)
 
 st.sidebar.divider()
 st.sidebar.header("Your Subjects & Topics")
 
-# Default to 1 subject
-num_subjects = st.sidebar.number_input("How many subjects?", min_value=1, max_value=9, value=1, step=1, key="num_subjects_input")
-
 # Initialize dictionary to persist all saved subjects independently
 if "saved_subjects" not in st.session_state:
     st.session_state.saved_subjects = {}
 
-# Loop through each subject
+# Demo Sample Data Button
+if st.sidebar.button("💡 Load Sample Demo Data"):
+    st.session_state.saved_subjects = {
+        0: [
+            {"subject": "Mathematics", "topic": "Calculus Derivatives", "difficulty": 4, "estimated_hours": 3.0, "exam_date": str(date.today() + timedelta(days=6))},
+            {"subject": "Mathematics", "topic": "Matrices & Vectors", "difficulty": 3, "estimated_hours": 2.0, "exam_date": str(date.today() + timedelta(days=6))}
+        ],
+        1: [
+            {"subject": "Physics", "topic": "Newton's Laws", "difficulty": 3, "estimated_hours": 2.5, "exam_date": str(date.today() + timedelta(days=12))},
+            {"subject": "Physics", "topic": "Electromagnetism", "difficulty": 5, "estimated_hours": 4.0, "exam_date": str(date.today() + timedelta(days=12))}
+        ],
+        2: [
+            {"subject": "History", "topic": "World War II Overview", "difficulty": 2, "estimated_hours": 2.0, "exam_date": str(date.today() + timedelta(days=20))}
+        ]
+    }
+    st.sidebar.success("Sample data loaded successfully!")
+    st.rerun()
+
+# Default to matching loaded sample length if preset, otherwise 1
+default_num_subjs = max(1, len(st.session_state.saved_subjects))
+num_subjects = st.sidebar.number_input("How many subjects?", min_value=1, max_value=9, value=default_num_subjs, step=1, key="num_subjects_input")
+
+# Loop through each subject form
 for i in range(int(num_subjects)):
     st.sidebar.markdown(f"### Subject {i+1}")
-    sub_name = st.sidebar.text_input(f"Subject Name {i+1}", key=f"sub_name_{i}")
-    ex_date = st.sidebar.date_input(f"Exam Date {i+1}", min_value=date.today(), key=f"date_{i}")
     
-    num_topics = st.sidebar.number_input(f"How many topics for Subject {i+1}?", min_value=1, max_value=10, value=1, step=1, key=f"num_topics_{i}")
+    # Preload existing values if sample data was loaded
+    existing_sub = st.session_state.saved_subjects.get(i, [])
+    default_name = existing_sub[0]["subject"] if existing_sub else f"Subject {i+1}"
+    default_date = datetime.strptime(existing_sub[0]["exam_date"], "%Y-%m-%d").date() if existing_sub else date.today() + timedelta(days=10)
+    default_topics_count = max(1, len(existing_sub))
+    
+    sub_name = st.sidebar.text_input(f"Subject Name {i+1}", value=default_name, key=f"sub_name_{i}")
+    ex_date = st.sidebar.date_input(f"Exam Date {i+1}", value=default_date, min_value=date.today(), key=f"date_{i}")
+    
+    num_topics = st.sidebar.number_input(f"How many topics for Subject {i+1}?", min_value=1, max_value=10, value=default_topics_count, step=1, key=f"num_topics_{i}")
     
     with st.sidebar.form(key=f"subject_form_{i}"):
         subject_topics = []
         for j in range(int(num_topics)):
             st.markdown(f"**Topic {j+1}**")
-            top_name = st.text_input(f"Topic Name {j+1}", key=f"top_name_{i}_{j}")
-            diff = st.slider(f"Difficulty {j+1} (1-5)", 1, 5, 3, key=f"diff_{i}_{j}")
+            
+            # Preload topic values if available
+            t_name_val = existing_sub[j]["topic"] if j < len(existing_sub) else ""
+            t_diff_val = existing_sub[j]["difficulty"] if j < len(existing_sub) else 3
+            t_hrs_val = existing_sub[j]["estimated_hours"] if j < len(existing_sub) else 2.0
+            
+            top_name = st.text_input(f"Topic Name {j+1}", value=t_name_val, key=f"top_name_{i}_{j}")
+            diff = st.slider(f"Difficulty {j+1} (1-5)", 1, 5, value=t_diff_val, key=f"diff_{i}_{j}")
+            est_hours = st.number_input(f"Est. Hours {j+1}", min_value=0.5, max_value=10.0, value=float(t_hrs_val), step=0.5, key=f"hrs_{i}_{j}")
             
             if top_name:
                 subject_topics.append({
                     "subject": sub_name,
                     "topic": top_name,
                     "difficulty": diff,
+                    "estimated_hours": est_hours,
                     "exam_date": str(ex_date)
                 })
         
@@ -138,26 +171,48 @@ for i in range(int(num_subjects)):
     
     st.sidebar.divider()
 
-# --- MAIN SCREEN GENERATION ---
-st.subheader("Your Generated Timetable")
+# --- MAIN SCREEN ANALYTICS & DASHBOARD ---
+st.subheader("📊 Curriculum & Analytics Dashboard")
 
-if st.button("Generate Your Timetable", type="primary"):
-    # Validate that end hour makes sense relative to start hour
+all_combined_tasks = []
+for sub_idx, topics in st.session_state.saved_subjects.items():
+    all_combined_tasks.extend(topics)
+
+if all_combined_tasks:
+    df_curriculum = pd.DataFrame(all_combined_tasks)
+    
+    # Calculate metrics
+    total_topics = len(df_curriculum)
+    total_hours = df_curriculum["estimated_hours"].sum()
+    unique_subjects_count = df_curriculum["subject"].nunique()
+    
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Total Subjects", unique_subjects_count)
+    col2.metric("Total Topics", total_topics)
+    col3.metric("Total Study Hours Needed", f"{total_hours} hrs")
+    
+    # Show Hours per Subject Chart
+    hours_per_subject = df_curriculum.groupby("subject")["estimated_hours"].sum()
+    st.markdown("##### ⏱️ Study Hours Required per Subject")
+    st.bar_chart(hours_per_subject)
+else:
+    st.info("👈 Add and save subjects in the sidebar or click **Load Sample Demo Data** to view analytics and generate your timetable!")
+
+st.divider()
+
+# --- MAIN SCREEN TIMETABLE GENERATION ---
+st.subheader("🗓️ Your Optimized Study Timetable")
+
+if st.button("🚀 Generate Your Timetable", type="primary"):
     if end_hour <= start_hour:
         st.error("⚠️ Daily End Hour must be later than Daily Start Hour! Please adjust your sidebar settings.")
     else:
         today = date.today()
         slots = generate_available_slots(today, num_days, start_hour, end_hour)
-        
-        # Combine all topics from all saved subjects in session state dictionary
-        all_combined_tasks = []
-        for sub_idx, topics in st.session_state.saved_subjects.items():
-            all_combined_tasks.extend(topics)
             
         if not all_combined_tasks:
             st.warning("Please add and save at least one subject in the sidebar before generating your timetable!")
         else:
-            # Group topics by subject so multiple topics per subject are preserved correctly
             subject_dict = {}
             for s in all_combined_tasks:
                 s_name = s["subject"]
@@ -170,11 +225,10 @@ if st.button("Generate Your Timetable", type="primary"):
                 topic_obj = Topic(
                     name=s["topic"], 
                     difficulty=s["difficulty"], 
-                    estimated_hours=2.0
+                    estimated_hours=s["estimated_hours"]
                 )
                 subject_dict[s_name]["topics"].append(topic_obj)
                 
-            # Convert into Subject objects for your algorithm
             student_subjects = []
             for sub_name, data in subject_dict.items():
                 student_subjects.append(Subject(
@@ -183,10 +237,8 @@ if st.button("Generate Your Timetable", type="primary"):
                     topics=data["topics"]
                 ))
                 
-            # Generate the timetable
             schedule = generate_timetable(student_subjects, slots)
             
-            # Format for display (Date column removed, leaving Time, Subject, Topic, Exam Date)
             results = []
             for slot in schedule:
                 if slot.assigned_subject:
@@ -201,7 +253,6 @@ if st.button("Generate Your Timetable", type="primary"):
                 df = pd.DataFrame(results)
                 st.success("Timetable generated successfully!")
                 
-                # --- COLORFUL STYLING FUNCTION ---
                 def style_timetable(dataframe):
                     unique_subjects = dataframe['Subject'].unique()
                     colors = [
@@ -223,7 +274,6 @@ if st.button("Generate Your Timetable", type="primary"):
                 styled_df = style_timetable(df)
                 st.dataframe(styled_df, use_container_width=True, hide_index=True)
                 
-                # Download CSV button
                 csv = df.to_csv(index=False).encode('utf-8')
                 st.download_button(
                     label="📥 Download Timetable as CSV",
