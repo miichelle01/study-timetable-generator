@@ -22,12 +22,14 @@ class ScheduleItem:
     time_str: str
     subject: str
     topic: str
+    difficulty_str: str
     exam_date: str
     is_break: bool = False
 
 def calculate_priority(exam_date: date, difficulty: int) -> float:
     days_left = max(1, (exam_date - date.today()).days)
-    return (difficulty * 10.0) / days_left
+    # Enhanced priority: Difficulty is squared so harder topics (4-5) get much higher priority urgency
+    return (float(difficulty ** 2) * 15.0) / days_left
 
 def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, end_hour: int, lunch_mins: int, short_break_mins: int, long_break_mins: int):
     pool = []
@@ -38,15 +40,16 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                 pool.append({
                     "subject": subj.name,
                     "topic": topic,
+                    "difficulty": topic.difficulty,
                     "priority": priority,
-                    "exam_date": subj.exam_date.strftime("%d/%m/%Y") # Formatted as DD/MM/YYYY
+                    "exam_date": subj.exam_date.strftime("%d/%m/%Y")
                 })
     
+    # Sort pool by priority descending (harder / more urgent topics first)
     pool.sort(key=lambda x: x["priority"], reverse=True)
     
     schedule_items = []
     
-    # Safety check: if no topics found in the pool, return empty list immediately
     if not pool:
         return schedule_items
         
@@ -58,13 +61,17 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
         curr_hour = start_hour
         curr_min = 0
         
-        continuous_study_hours = 0.0  # Track continuous study duration
+        continuous_study_hours = 0.0  
         
         while curr_hour < end_hour and pool_index < len(pool):
             current_item = pool[pool_index]
             subject_name = current_item["subject"]
             topic_name = current_item["topic"].name
+            topic_diff = current_item["difficulty"]
             exam_date_str = current_item["exam_date"]
+            
+            # Format difficulty as stars for easy reading
+            diff_stars = "⭐" * topic_diff
             
             # Check for Lunch Break around 13:00
             if curr_hour == 13 and curr_min == 0:
@@ -78,6 +85,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     time_str=f"{start_t} - {end_t}",
                     subject="🍽️ Meal Break",
                     topic="",
+                    difficulty_str="-",
                     exam_date="-",
                     is_break=True
                 ))
@@ -96,13 +104,13 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     time_str=f"{start_t} - {end_t}",
                     subject="🍽️ Meal Break",
                     topic="",
+                    difficulty_str="-",
                     exam_date="-",
                     is_break=True
                 ))
                 continuous_study_hours = 0.0 
                 continue
             
-            # Max slot size before enforcing a check/break rule
             available_slot_hours = min(2.0, end_hour - curr_hour - (curr_min / 60.0))
             if available_slot_hours <= 0:
                 break
@@ -121,6 +129,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                 time_str=f"{start_t} - {end_t}",
                 subject=subject_name,
                 topic=topic_name,
+                difficulty_str=diff_stars,
                 exam_date=exam_date_str,
                 is_break=False
             ))
@@ -128,13 +137,11 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
             current_topic_hours_left -= work_hours
             continuous_study_hours += work_hours
             
-            # Handle Topic Completion or Break triggers
             if current_topic_hours_left <= 0:
                 pool_index += 1
                 if pool_index < len(pool):
                     current_topic_hours_left = pool[pool_index]["topic"].estimated_hours
                 
-                # Rule: Studied for 2 hours or less -> Short Break
                 if curr_hour < end_hour:
                     s_start = f"{curr_hour:02d}:{curr_min:02d}"
                     t_min = curr_min + short_break_mins
@@ -146,12 +153,12 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                         time_str=f"{s_start} - {s_end}",
                         subject="☕ Short Break",
                         topic="",
+                        difficulty_str="-",
                         exam_date="-",
                         is_break=True
                     ))
                     continuous_study_hours = 0.0
             else:
-                # Rule: Studied for more than 2 hours -> Long Break
                 if continuous_study_hours > 2.0 and curr_hour < end_hour:
                     l_start = f"{curr_hour:02d}:{curr_min:02d}"
                     t_min = curr_min + long_break_mins
@@ -163,6 +170,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                         time_str=f"{l_start} - {l_end}",
                         subject="🧘 Long Break",
                         topic="",
+                        difficulty_str="-",
                         exam_date="-",
                         is_break=True
                     ))
@@ -218,7 +226,7 @@ for i in range(int(num_subjects)):
                     "topic": top_name,
                     "difficulty": diff,
                     "estimated_hours": est_hours,
-                    "exam_date": ex_date  # Storing date object directly for easy formatting
+                    "exam_date": ex_date
                 })
         
         submitted = st.form_submit_button(f"Save Subject {i+1}")
@@ -274,6 +282,7 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                     "Time": item.time_str,
                     "Subject": item.subject,
                     "Topic": item.topic,
+                    "Difficulty": item.difficulty_str,
                     "Exam Date": item.exam_date
                 })
                     
@@ -297,11 +306,11 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                     def color_rows(row):
                         subj = row['Subject']
                         if "Meal Break" in subj:
-                            return ['background-color: #fffde7; color: #795548; font-style: italic;' for _ in row] # Soft Yellow/Cream
+                            return ['background-color: #fffde7; color: #795548; font-style: italic;' for _ in row]
                         elif "Short Break" in subj:
-                            return ['background-color: #fff8e1; color: #f57f17; font-style: italic;' for _ in row] # Soft Warm Amber
+                            return ['background-color: #fff8e1; color: #f57f17; font-style: italic;' for _ in row]
                         elif "Long Break" in subj:
-                            return ['background-color: #e0f2f1; color: #00796b; font-style: italic;' for _ in row] # Soft Teal
+                            return ['background-color: #e0f2f1; color: #00796b; font-style: italic;' for _ in row]
                         return [color_map.get(subj, '') for _ in row]
                     
                     return dataframe.style.apply(color_rows, axis=1)
