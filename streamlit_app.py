@@ -294,4 +294,12 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                     color_map = {subj: colors[i % len(colors)] for i, subj in enumerate(unique_subjects)}
                     
                     def color_rows(row):
-                        subj = row['Subject
+                        subj = row['Subject']
+                        if "Break" in subj:
+                            return ['background-color: #f5f5f5; color: #666666; font-style: italic;' for _ in row]
+                        return [color_map.get(subj, '') for _ in row]
+                    
+                    return dataframe.style.apply(color_rows, axis=1)
+
+                styled_df = style_timetable(df)
+                st.dataframe(styled_df
