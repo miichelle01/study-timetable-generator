@@ -212,8 +212,6 @@ for i in range(int(num_subjects)):
     with st.sidebar.form(key=f"subject_form_{i}"):
         subject_topics = []
         for j in range(int(num_topics)):
-            st.sidebar.markdown(f"**Topic {j+1}**")
-            
             top_name = st.text_input(f"Topic Name {j+1}", key=f"top_name_{i}_{j}")
             diff = st.slider(f"Difficulty {j+1} (1-5)", 1, 5, value=3, key=f"diff_{i}_{j}")
             est_hours = st.number_input(f"Hours {j+1} (min 0.5)", min_value=0.5, max_value=4.0, value=0.5, step=0.5, key=f"hrs_{i}_{j}")
