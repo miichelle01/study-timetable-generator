@@ -45,11 +45,12 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
     pool.sort(key=lambda x: x["priority"], reverse=True)
     
     schedule_items = []
-    pool_index = 0
     
+    # Safety check: if no topics found in the pool, return empty list immediately
     if not pool:
         return schedule_items
         
+    pool_index = 0
     current_topic_hours_left = pool[0]["topic"]["estimated_hours"]
     
     for day_offset in range(1, num_days + 1):
@@ -174,7 +175,7 @@ st.title("📚 Study Timetable Generator 📚")
 st.caption("##### *Plan better. Ace your exams.*")
 st.divider()  
 
-# Sidebar controls for availability & breaks (Using custom HTML <h2> for explicitly larger sidebar heading)
+# Sidebar controls for availability & breaks
 st.sidebar.markdown("<h2 style='font-size: 26px; font-weight: bold;'>Your Plan</h2>", unsafe_allow_html=True)
 num_days = st.sidebar.slider("Days to cover:", min_value=3, max_value=30, value=7)
 
@@ -239,7 +240,7 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
             all_combined_tasks.extend(topics)
             
         if not all_combined_tasks:
-            st.warning("Please add and save at least one subject in the sidebar before generating your timetable!")
+            st.warning("⚠️ Please make sure you filled out your subject details and clicked the **'Save Subject'** button in the sidebar before generating your timetable!")
         else:
             subject_dict = {}
             for s in all_combined_tasks:
