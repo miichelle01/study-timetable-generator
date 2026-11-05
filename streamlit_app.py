@@ -30,7 +30,6 @@ def calculate_priority(exam_date: date, difficulty: int) -> float:
     return (difficulty * 10.0) / days_left
 
 def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, end_hour: int, lunch_mins: int, short_break_mins: int, long_break_mins: int):
-    # Build priority pool of all topics
     pool = []
     for subj in subjects:
         for topic in subj.topics:
@@ -47,14 +46,18 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
     
     schedule_items = []
     pool_index = 0
-    current_topic_hours_left = pool[0]["topic"]["estimated_hours"] if pool else 0
+    
+    if not pool:
+        return schedule_items
+        
+    current_topic_hours_left = pool[0]["topic"]["estimated_hours"]
     
     for day_offset in range(1, num_days + 1):
         current_day = date.today() + timedelta(days=day_offset)
         curr_hour = start_hour
         curr_min = 0
         
-        study_blocks_today = 0
+        continuous_study_hours = 0.0  # Track continuous study duration
         
         while curr_hour < end_hour and pool_index < len(pool):
             current_item = pool[pool_index]
@@ -62,10 +65,9 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
             topic_name = current_item["topic"].name
             exam_date_str = current_item["exam_date"]
             
-            # Check for Lunch Break around 13:00 (if schedule covers 13:00)
+            # Check for Lunch Break around 13:00
             if curr_hour == 13 and curr_min == 0:
                 start_t = f"{curr_hour:02d}:{curr_min:02d}"
-                # Advance time by lunch duration
                 total_min = curr_min + lunch_mins
                 curr_hour += total_min // 60
                 curr_min = total_min % 60
@@ -78,9 +80,28 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     exam_date="-",
                     is_break=True
                 ))
+                continuous_study_hours = 0.0 
+                continue
+
+            # Check for Dinner Break around 19:00
+            if curr_hour == 19 and curr_min == 0:
+                start_t = f"{curr_hour:02d}:{curr_min:02d}"
+                total_min = curr_min + lunch_mins
+                curr_hour += total_min // 60
+                curr_min = total_min % 60
+                end_t = f"{curr_hour:02d}:{curr_min:02d}"
+                
+                schedule_items.append(ScheduleItem(
+                    time_str=f"{start_t} - {end_t}",
+                    subject="🍽️ Meal Break",
+                    topic=f"Dinner Break ({lunch_mins} mins)",
+                    exam_date="-",
+                    is_break=True
+                ))
+                continuous_study_hours = 0.0 
                 continue
             
-            # Determine how many hours we can study in this block (max 2 hours before a check/break)
+            # Max slot size before enforcing a check/break rule
             available_slot_hours = min(2.0, end_hour - curr_hour - (curr_min / 60.0))
             if available_slot_hours <= 0:
                 break
@@ -89,7 +110,6 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
             
             start_t = f"{curr_hour:02d}:{curr_min:02d}"
             
-            # Calculate end time based on work_hours
             total_minutes_start = curr_hour * 60 + curr_min
             total_minutes_end = int(total_minutes_start + (work_hours * 60))
             curr_hour = total_minutes_end // 60
@@ -105,31 +125,33 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
             ))
             
             current_topic_hours_left -= work_hours
-            study_blocks_today += 1
+            continuous_study_hours += work_hours
             
-            # If topic is finished, move to next topic in pool
+            # Handle Topic Completion or Break triggers
             if current_topic_hours_left <= 0:
                 pool_index += 1
                 if pool_index < len(pool):
                     current_topic_hours_left = pool[pool_index]["topic"]["estimated_hours"]
-                    # Insert Short Break between different topics/subjects
-                    if curr_hour < end_hour:
-                        s_start = f"{curr_hour:02d}:{curr_min:02d}"
-                        t_min = curr_min + short_break_mins
-                        curr_hour += t_min // 60
-                        curr_min = t_min % 60
-                        s_end = f"{curr_hour:02d}:{curr_min:02d}"
-                        
-                        schedule_items.append(ScheduleItem(
-                            time_str=f"{s_start} - {s_end}",
-                            subject="☕ Short Break",
-                            topic=f"Transition Break ({short_break_mins} mins)",
-                            exam_date="-",
-                            is_break=True
-                        ))
+                
+                # Rule: Studied for 2 hours or less -> Short Break
+                if curr_hour < end_hour:
+                    s_start = f"{curr_hour:02d}:{curr_min:02d}"
+                    t_min = curr_min + short_break_mins
+                    curr_hour += t_min // 60
+                    curr_min = t_min % 60
+                    s_end = f"{curr_hour:02d}:{curr_min:02d}"
+                    
+                    schedule_items.append(ScheduleItem(
+                        time_str=f"{s_start} - {s_end}",
+                        subject="☕ Short Break",
+                        topic=f"Short Break ({short_break_mins} mins)",
+                        exam_date="-",
+                        is_break=True
+                    ))
+                    continuous_study_hours = 0.0
             else:
-                # Intensive studying check: insert long break after continuous study blocks
-                if study_blocks_today % 2 == 0 and curr_hour < end_hour:
+                # Rule: Studied for more than 2 hours -> Long Break
+                if continuous_study_hours > 2.0 and curr_hour < end_hour:
                     l_start = f"{curr_hour:02d}:{curr_min:02d}"
                     t_min = curr_min + long_break_mins
                     curr_hour += t_min // 60
@@ -139,16 +161,17 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     schedule_items.append(ScheduleItem(
                         time_str=f"{l_start} - {l_end}",
                         subject="🧘 Long Break",
-                        topic=f"Rest & Recovery ({long_break_mins} mins)",
+                        topic=f"Intensive Study Rest Break ({long_break_mins} mins)",
                         exam_date="-",
                         is_break=True
                     ))
+                    continuous_study_hours = 0.0
                     
     return schedule_items
 
 # --- STREAMLIT UI ---
 st.title("📚 Study Timetable Generator 📚")
-st.caption("##### *Plan better. Ace your exams with automated breaks.*")
+st.caption("##### *Plan better. Ace your exams with smart breaks and meal times.*")
 st.divider()  
 
 # Sidebar controls for availability & breaks
@@ -156,23 +179,22 @@ st.sidebar.header("Your Plan")
 num_days = st.sidebar.slider("Days to cover:", min_value=3, max_value=30, value=7)
 
 start_hour = st.sidebar.slider("Daily Start Hour (24h):", min_value=0, max_value=23, value=9)
-end_hour = st.sidebar.slider("Daily End Hour (24h):", min_value=0, max_value=23, value=17)
+end_hour = st.sidebar.slider("Daily End Hour (24h):", min_value=0, max_value=23, value=21)
 
 st.sidebar.divider()
-st.sidebar.header("Your Breaks")
+st.sidebar.header("Your Break")
+lunch_mins = st.sidebar.slider("Meal Break (mins):", min_value=30, max_value=60, value=45, step=5)
 short_break_mins = st.sidebar.slider("Short Break (mins):", min_value=5, max_value=15, value=10, step=5)
 long_break_mins = st.sidebar.slider("Long Break (mins):", min_value=15, max_value=30, value=20, step=5)
-lunch_mins = st.sidebar.slider("Lunch / Meal Break (mins):", min_value=30, max_value=60, value=45, step=5)
+
 st.sidebar.divider()
 st.sidebar.header("Your Subjects & Topics")
 
-# Initialize dictionary to persist all saved subjects independently
 if "saved_subjects" not in st.session_state:
     st.session_state.saved_subjects = {}
 
 num_subjects = st.sidebar.number_input("How many subjects?", min_value=1, max_value=9, value=1, step=1, key="num_subjects_input")
 
-# Loop through each subject
 for i in range(int(num_subjects)):
     st.sidebar.markdown(f"### Subject {i+1}")
     
@@ -256,7 +278,7 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                     
             if results:
                 df = pd.DataFrame(results)
-                st.success("Timetable generated successfully with integrated breaks!")
+                st.success("Timetable generated successfully with lunch and dinner breaks!")
                 
                 def style_timetable(dataframe):
                     unique_subjects = [s for s in dataframe['Subject'].unique() if not any(b in s for b in ["Break"])]
