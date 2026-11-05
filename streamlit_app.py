@@ -28,7 +28,6 @@ class ScheduleItem:
 
 def calculate_priority(exam_date: date, difficulty: int) -> float:
     days_left = max(1, (exam_date - date.today()).days)
-    # Enhanced priority: Difficulty is squared so harder topics (4-5) get much higher priority urgency
     return (float(difficulty ** 2) * 15.0) / days_left
 
 def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, end_hour: int, lunch_mins: int, short_break_mins: int, long_break_mins: int):
@@ -45,7 +44,6 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     "exam_date": subj.exam_date.strftime("%d/%m/%Y")
                 })
     
-    # Sort pool by priority descending (harder / more urgent topics first)
     pool.sort(key=lambda x: x["priority"], reverse=True)
     
     schedule_items = []
@@ -70,7 +68,6 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
             topic_diff = current_item["difficulty"]
             exam_date_str = current_item["exam_date"]
             
-            # Format difficulty as stars for easy reading
             diff_stars = "⭐" * topic_diff
             
             # Check for Lunch Break around 13:00
@@ -83,7 +80,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                 
                 schedule_items.append(ScheduleItem(
                     time_str=f"{start_t} - {end_t}",
-                    subject="🍽️ Meal Break",
+                    subject="Meal Break",
                     topic="",
                     difficulty_str="-",
                     exam_date="-",
@@ -102,7 +99,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                 
                 schedule_items.append(ScheduleItem(
                     time_str=f"{start_t} - {end_t}",
-                    subject="🍽️ Meal Break",
+                    subject="Meal Break",
                     topic="",
                     difficulty_str="-",
                     exam_date="-",
@@ -151,7 +148,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     
                     schedule_items.append(ScheduleItem(
                         time_str=f"{s_start} - {s_end}",
-                        subject="☕ Short Break",
+                        subject="Short Break",
                         topic="",
                         difficulty_str="-",
                         exam_date="-",
@@ -168,7 +165,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     
                     schedule_items.append(ScheduleItem(
                         time_str=f"{l_start} - {l_end}",
-                        subject="🧘 Long Break",
+                        subject="Long Break",
                         topic="",
                         difficulty_str="-",
                         exam_date="-",
