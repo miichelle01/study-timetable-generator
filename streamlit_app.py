@@ -3,8 +3,6 @@ from dataclasses import dataclass, field
 from datetime import date, timedelta
 from typing import List
 import pandas as pd
-import streamlit.components.v1 as components
-import io
 
 @dataclass
 class Topic:
@@ -196,91 +194,4 @@ st.sidebar.divider()
 st.sidebar.header("Your Subjects & Topics")
 
 if "saved_subjects" not in st.session_state:
-    st.session_state.saved_subjects = {}
-
-num_subjects = st.sidebar.number_input("How many subjects?", min_value=1, max_value=9, value=1, step=1, key="num_subjects_input")
-
-for i in range(int(num_subjects)):
-    st.sidebar.markdown(f"### Subject {i+1}")
-    sub_name = st.sidebar.text_input(f"Subject Name {i+1}", key=f"sub_name_{i}")
-    ex_date = st.sidebar.date_input(f"Exam Date {i+1}", min_value=date.today(), key=f"date_{i}")
-    num_topics = st.sidebar.number_input(f"How many topics for Subject {i+1}?", min_value=1, max_value=10, value=1, step=1, key=f"num_topics_{i}")
-    
-    with st.sidebar.form(key=f"subject_form_{i}"):
-        subject_topics = []
-        for j in range(int(num_topics)):
-            top_name = st.text_input(f"Topic Name {j+1}", key=f"top_name_{i}_{j}")
-            diff = st.slider(f"Difficulty {j+1} (1-5)", 1, 5, value=3, key=f"diff_{i}_{j}")
-            est_hours = st.number_input(f"Hours {j+1}", min_value=0.5, max_value=4.0, value=0.5, step=0.5, key=f"hrs_{i}_{j}")
-            
-            if top_name:
-                subject_topics.append({
-                    "subject": sub_name,
-                    "topic": top_name,
-                    "difficulty": diff,
-                    "estimated_hours": est_hours,
-                    "exam_date": ex_date
-                })
-        
-        submitted = st.form_submit_button(f"Save Subject {i+1}")
-        if submitted and sub_name:
-            st.session_state.saved_subjects[i] = subject_topics
-            st.success(f"Saved {sub_name} with {len(subject_topics)} topics!")
-    
-    st.sidebar.divider()
-
-# --- MAIN SCREEN ---
-st.subheader("Your Study Timetable")
-
-if st.button("🚀 Generate Your Timetable", type="primary"):
-    if end_hour <= start_hour:
-        st.error("⚠️ Daily End Hour must be later than Daily Start Hour!")
-    else:
-        all_combined_tasks = []
-        for sub_idx, topics in st.session_state.saved_subjects.items():
-            all_combined_tasks.extend(topics)
-            
-        if not all_combined_tasks:
-            st.warning("⚠️ Please make sure you filled out your subject details and clicked the **'Save Subject'** button in the sidebar before generating!")
-        else:
-            subject_dict = {}
-            for s in all_combined_tasks:
-                s_name = s["subject"]
-                if s_name not in subject_dict:
-                    subject_dict[s_name] = {"exam_date": s["exam_date"], "topics": []}
-                subject_dict[s_name]["topics"].append(Topic(name=s["topic"], difficulty=s["difficulty"], estimated_hours=s["estimated_hours"]))
-                
-            student_subjects = [Subject(name=k, exam_date=v["exam_date"], topics=v["topics"]) for k, v in subject_dict.items()]
-            
-            all_exam_dates = [s.exam_date for s in student_subjects]
-            earliest_exam = min(all_exam_dates) if all_exam_dates else date.today() + timedelta(days=7)
-            num_days = max(1, (earliest_exam - date.today()).days)
-                
-            schedule = generate_schedule(student_subjects, num_days, start_hour, end_hour, lunch_mins, short_break_mins, long_break_mins)
-            
-            results = []
-            for item in schedule:
-                results.append({
-                    "Time Slot": item.time_str,
-                    "Subject": item.subject,
-                    "Topic": item.topic,
-                    "Difficulty": item.difficulty_str,
-                    "Exam Date": item.exam_date
-                })
-                    
-            if results:
-                df = pd.DataFrame(results)
-                st.success("Timetable generated successfully!")
-                
-                st.dataframe(df, use_container_width=True, hide_index=True)
-                
-                csv_data = df.to_csv(index=False).encode('utf-8')
-                st.download_button(
-                    label="📥 Download Timetable (Spreadsheet / PDF Ready)",
-                    data=csv_data,
-                    file_name="study_timetable.csv",
-                    mime="text/csv",
-                    type="primary"
-                )
-            else:
-                st.warning("Not enough available study slots to fit the required hours. Try widening your daily time window or increasing days!")
+    st.session_
