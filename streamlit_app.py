@@ -6,11 +6,6 @@ import pandas as pd
 import streamlit.components.v1 as components
 import io
 
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib import colors
-
 @dataclass
 class Topic:
     name: str
@@ -66,7 +61,6 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
         continuous_study_hours = 0.0  
         
         while curr_hour < end_hour and pool_index < len(pool):
-            # Enforce meal breaks at 13:00 and 19:00 sharp
             if (curr_hour == 13 and curr_min == 0) or (curr_hour == 19 and curr_min == 0):
                 start_t = f"{curr_hour:02d}:{curr_min:02d}"
                 total_min = curr_min + lunch_mins
@@ -75,7 +69,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                 end_t = f"{curr_hour:02d}:{curr_min:02d}"
                 
                 schedule_items.append(ScheduleItem(
-                    time_str=f"{start_t}\n{end_t}",
+                    time_str=f"{start_t} - {end_t}",
                     subject="Meal Break",
                     topic="",
                     difficulty_str="",
@@ -85,7 +79,6 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                 continuous_study_hours = 0.0 
                 continue
 
-            # Snap to meal if we are within 15 minutes of 13:00 or 19:00
             if (curr_hour == 12 and curr_min >= 45) or (curr_hour == 18 and curr_min >= 45):
                 curr_hour = 13 if curr_hour == 12 else 19
                 curr_min = 0
@@ -122,7 +115,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
             end_t = f"{curr_hour:02d}:{curr_min:02d}"
             
             schedule_items.append(ScheduleItem(
-                time_str=f"{start_t}\n{end_t}",
+                time_str=f"{start_t} - {end_t}",
                 subject=subject_name,
                 topic=topic_name,
                 difficulty_str=diff_stars,
@@ -150,7 +143,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     s_end = f"{curr_hour:02d}:{curr_min:02d}"
                     
                     schedule_items.append(ScheduleItem(
-                        time_str=f"{s_start}\n{s_end}",
+                        time_str=f"{s_start} - {s_end}",
                         subject="Short Break",
                         topic="",
                         difficulty_str="",
@@ -171,7 +164,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     l_end = f"{curr_hour:02d}:{curr_min:02d}"
                     
                     schedule_items.append(ScheduleItem(
-                        time_str=f"{l_start}\n{l_end}",
+                        time_str=f"{l_start} - {l_end}",
                         subject="Long Break",
                         topic="",
                         difficulty_str="",
@@ -187,14 +180,14 @@ st.title("📚 Study Timetable Generator 📚")
 st.caption("##### *Plan better. Ace your exams.*")
 st.divider()  
 
-# Sidebar controls for availability & breaks
+# Sidebar controls
 st.sidebar.markdown("<h2 style='font-size: 26px; font-weight: bold;'>Your Plan</h2>", unsafe_allow_html=True)
 
 start_hour = st.sidebar.slider("Daily Start Hour (24h):", min_value=0, max_value=23, value=9)
 end_hour = st.sidebar.slider("Daily End Hour (24h):", min_value=0, max_value=23, value=21)
 
 st.sidebar.divider()
-st.sidebar.header('"Work with no play makes Jack a dull boy"')
+st.sidebar.header('Breaks Configuration')
 lunch_mins = st.sidebar.slider("Meal Break (mins):", min_value=30, max_value=60, value=45, step=5)
 short_break_mins = st.sidebar.slider("Short Break (mins):", min_value=5, max_value=15, value=10, step=5)
 long_break_mins = st.sidebar.slider("Long Break (mins):", min_value=15, max_value=30, value=20, step=5)
@@ -205,4 +198,54 @@ st.sidebar.header("Your Subjects & Topics")
 if "saved_subjects" not in st.session_state:
     st.session_state.saved_subjects = {}
 
-num_subjects = st.sidebar.number_input("
+num_subjects = st.sidebar.number_input("How many subjects?", min_value=1, max_value=9, value=1, step=1, key="num_subjects_input")
+
+for i in range(int(num_subjects)):
+    st.sidebar.markdown(f"### Subject {i+1}")
+    sub_name = st.sidebar.text_input(f"Subject Name {i+1}", key=f"sub_name_{i}")
+    ex_date = st.sidebar.date_input(f"Exam Date {i+1}", min_value=date.today(), key=f"date_{i}")
+    num_topics = st.sidebar.number_input(f"How many topics for Subject {i+1}?", min_value=1, max_value=10, value=1, step=1, key=f"num_topics_{i}")
+    
+    with st.sidebar.form(key=f"subject_form_{i}"):
+        subject_topics = []
+        for j in range(int(num_topics)):
+            top_name = st.text_input(f"Topic Name {j+1}", key=f"top_name_{i}_{j}")
+            diff = st.slider(f"Difficulty {j+1} (1-5)", 1, 5, value=3, key=f"diff_{i}_{j}")
+            est_hours = st.number_input(f"Hours {j+1}", min_value=0.5, max_value=4.0, value=0.5, step=0.5, key=f"hrs_{i}_{j}")
+            
+            if top_name:
+                subject_topics.append({
+                    "subject": sub_name,
+                    "topic": top_name,
+                    "difficulty": diff,
+                    "estimated_hours": est_hours,
+                    "exam_date": ex_date
+                })
+        
+        submitted = st.form_submit_button(f"Save Subject {i+1}")
+        if submitted and sub_name:
+            st.session_state.saved_subjects[i] = subject_topics
+            st.success(f"Saved {sub_name} with {len(subject_topics)} topics!")
+    
+    st.sidebar.divider()
+
+# --- MAIN SCREEN ---
+st.subheader("Your Study Timetable")
+
+if st.button("🚀 Generate Your Timetable", type="primary"):
+    if end_hour <= start_hour:
+        st.error("⚠️ Daily End Hour must be later than Daily Start Hour!")
+    else:
+        all_combined_tasks = []
+        for sub_idx, topics in st.session_state.saved_subjects.items():
+            all_combined_tasks.extend(topics)
+            
+        if not all_combined_tasks:
+            st.warning("⚠️ Please make sure you filled out your subject details and clicked the **'Save Subject'** button in the sidebar before generating!")
+        else:
+            subject_dict = {}
+            for s in all_combined_tasks:
+                s_name = s["subject"]
+                if s_name not in subject_dict:
+                    subject_dict[s_name] = {"exam_date": s["exam_date"], "topics": []}
+                subject_dict[s_name
