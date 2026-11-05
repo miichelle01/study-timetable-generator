@@ -184,14 +184,14 @@ st.divider()
 # Sidebar controls for availability & breaks (Days to cover slider removed)
 st.sidebar.markdown("<h2 style='font-size: 26px; font-weight: bold;'>Your Plan</h2>", unsafe_allow_html=True)
 
-start_hour = st.sidebar.slider("Daily Start Hour (24h):", min_value=0, max_value=23, value=9)
-end_hour = st.sidebar.slider("Daily End Hour (24h):", min_value=0, max_value=23, value=21)
+start_hour = st.sidebar.slider("Daily Start Hour :", min_value=0, max_value=23, value=9)
+end_hour = st.sidebar.slider("Daily End Hour :", min_value=0, max_value=23, value=21)
 
 st.sidebar.divider()
 st.sidebar.header('"Work with no play makes Jack a dull boy"')
-lunch_mins = st.sidebar.slider("Meal Break (mins):", min_value=30, max_value=60, value=45, step=5)
-short_break_mins = st.sidebar.slider("Short Break (mins):", min_value=5, max_value=15, value=10, step=5)
-long_break_mins = st.sidebar.slider("Long Break (mins):", min_value=15, max_value=30, value=20, step=5)
+lunch_mins = st.sidebar.slider("Meal Break :", min_value=30, max_value=60, value=45, step=5)
+short_break_mins = st.sidebar.slider("Short Break :", min_value=5, max_value=15, value=10, step=5)
+long_break_mins = st.sidebar.slider("Long Break :", min_value=15, max_value=30, value=20, step=5)
 
 st.sidebar.divider()
 st.sidebar.header("Your Subjects & Topics")
@@ -288,7 +288,7 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                     
             if results:
                 df = pd.DataFrame(results)
-                st.success("Timetable generated successfully with all breaks!")
+                st.success("Timetable generated successfully!")
                 
                 unique_subjects = [s for s in df['Subject'].unique() if not any(b in s for b in ["Break"])]
                 colors = ['#ffebee', '#e8f5e9', '#e3f2fd', '#fff3e0', '#f3e5f5', '#e0f7fa', '#fce4ec']
