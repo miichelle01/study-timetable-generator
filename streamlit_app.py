@@ -300,4 +300,8 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                     if "Meal Break" in subj:
                         row_style = "background-color: #fffde7; color: #795548; font-style: italic;"
                     elif "Short Break" in subj:
-                        row_style = "background-color: #fff8e1; color
+                        row_style = "background-color: #fff8e1; color: #f57f17; font-style: italic;"
+                    elif "Long Break" in subj:
+                        row_style = "background-color: #e0f2f1; color: #00796b; font-style: italic;"
+                    else:
+                        bg_color = color_map.get(subj,
