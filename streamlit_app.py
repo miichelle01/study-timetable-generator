@@ -174,8 +174,8 @@ st.title("📚 Study Timetable Generator 📚")
 st.caption("##### *Plan better. Ace your exams.*")
 st.divider()  
 
-# Sidebar controls for availability & breaks (Made "Your Plan" a larger markdown header)
-st.sidebar.markdown("## Your Plan")
+# Sidebar controls for availability & breaks (Using custom HTML <h2> for explicitly larger sidebar heading)
+st.sidebar.markdown("<h2 style='font-size: 26px; font-weight: bold;'>Your Plan</h2>", unsafe_allow_html=True)
 num_days = st.sidebar.slider("Days to cover:", min_value=3, max_value=30, value=7)
 
 start_hour = st.sidebar.slider("Daily Start Hour (24h):", min_value=0, max_value=23, value=9)
@@ -271,45 +271,3 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
             for item in schedule:
                 results.append({
                     "Time": item.time_str,
-                    "Subject": item.subject,
-                    "Topic": item.topic,
-                    "Exam Date": item.exam_date
-                })
-                    
-            if results:
-                df = pd.DataFrame(results)
-                st.success("Timetable generated successfully with all breaks!")
-                
-                def style_timetable(dataframe):
-                    unique_subjects = [s for s in dataframe['Subject'].unique() if not any(b in s for b in ["Break"])]
-                    colors = [
-                        'background-color: #ffebee; color: black;', # Soft Red
-                        'background-color: #e8f5e9; color: black;', # Soft Green
-                        'background-color: #e3f2fd; color: black;', # Soft Blue
-                        'background-color: #fff3e0; color: black;', # Soft Orange
-                        'background-color: #f3e5f5; color: black;', # Soft Purple
-                        'background-color: #e0f7fa; color: black;', # Soft Cyan
-                        'background-color: #fce4ec; color: black;'  # Soft Pink
-                    ]
-                    color_map = {subj: colors[i % len(colors)] for i, subj in enumerate(unique_subjects)}
-                    
-                    def color_rows(row):
-                        subj = row['Subject']
-                        if "Break" in subj:
-                            return ['background-color: #f5f5f5; color: #666666; font-style: italic;' for _ in row]
-                        return [color_map.get(subj, '') for _ in row]
-                    
-                    return dataframe.style.apply(color_rows, axis=1)
-
-                styled_df = style_timetable(df)
-                st.dataframe(styled_df, use_container_width=True, hide_index=True)
-                
-                csv = df.to_csv(index=False).encode('utf-8')
-                st.download_button(
-                    label="📥 Download Timetable as CSV",
-                    data=csv,
-                    file_name="my_study_timetable.csv",
-                    mime="text/type",
-                )
-            else:
-                st.warning("Not enough available study slots to fit the required hours. Try widening your daily time window or increasing your total days!")
