@@ -211,11 +211,11 @@ for i in range(int(num_subjects)):
     with st.sidebar.form(key=f"subject_form_{i}"):
         subject_topics = []
         for j in range(int(num_topics)):
-            st.markdown(f"**Topic {j+1}**")
+            st.sidebar.markdown(f"**Topic {j+1}**")
             
             top_name = st.text_input(f"Topic Name {j+1}", key=f"top_name_{i}_{j}")
             diff = st.slider(f"Difficulty {j+1} (1-5)", 1, 5, value=3, key=f"diff_{i}_{j}")
-            est_hours = st.number_input(f"Hours {j+1}", min_value=0.5, max_value=4.0, value=2.0, step=0.5, key=f"hrs_{i}_{j}")
+            est_hours = st.number_input(f"Hours {j+1} (min 0.5)", min_value=0.5, max_value=4.0, value=0.5, step=0.5, key=f"hrs_{i}_{j}")
             
             if top_name:
                 subject_topics.append({
@@ -313,7 +313,17 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                     return dataframe.style.apply(color_rows, axis=1)
 
                 styled_df = style_timetable(df)
-                st.dataframe(styled_df, use_container_width=True, hide_index=True)
+                
+                # Column configuration to ensure topic/subject columns have ample sizing space
+                col_config = {
+                    "Time": st.column_config.TextColumn("Time", width="small"),
+                    "Subject": st.column_config.TextColumn("Subject", width="medium"),
+                    "Topic": st.column_config.TextColumn("Topic", width="large"),
+                    "Difficulty": st.column_config.TextColumn("Difficulty", width="small"),
+                    "Exam Date": st.column_config.TextColumn("Exam Date", width="small"),
+                }
+
+                st.dataframe(styled_df, use_container_width=True, hide_index=True, column_config=col_config)
                 
                 csv = df.to_csv(index=False).encode('utf-8')
                 st.download_button(
