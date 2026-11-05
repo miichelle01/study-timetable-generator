@@ -83,8 +83,8 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     time_str=f"{start_t} - {end_t}",
                     subject="Meal Break",
                     topic="",
-                    difficulty_str="-",
-                    exam_date="-",
+                    difficulty_str="",
+                    exam_date="",
                     is_break=True
                 ))
                 continuous_study_hours = 0.0 
@@ -102,8 +102,8 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     time_str=f"{start_t} - {end_t}",
                     subject="Meal Break",
                     topic="",
-                    difficulty_str="-",
-                    exam_date="-",
+                    difficulty_str="",
+                    exam_date="",
                     is_break=True
                 ))
                 continuous_study_hours = 0.0 
@@ -151,8 +151,8 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                         time_str=f"{s_start} - {s_end}",
                         subject="Short Break",
                         topic="",
-                        difficulty_str="-",
-                        exam_date="-",
+                        difficulty_str="",
+                        exam_date="",
                         is_break=True
                     ))
                     continuous_study_hours = 0.0
@@ -168,8 +168,8 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                         time_str=f"{l_start} - {l_end}",
                         subject="Long Break",
                         topic="",
-                        difficulty_str="-",
-                        exam_date="-",
+                        difficulty_str="",
+                        exam_date="",
                         is_break=True
                     ))
                     continuous_study_hours = 0.0
