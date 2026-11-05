@@ -314,16 +314,8 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
 
                 styled_df = style_timetable(df)
                 
-                # Column configuration to ensure topic/subject columns have ample sizing space
-                col_config = {
-                    "Time": st.column_config.TextColumn("Time", width="small"),
-                    "Subject": st.column_config.TextColumn("Subject", width="medium"),
-                    "Topic": st.column_config.TextColumn("Topic", width="large"),
-                    "Difficulty": st.column_config.TextColumn("Difficulty", width="small"),
-                    "Exam Date": st.column_config.TextColumn("Exam Date", width="small"),
-                }
-
-                st.dataframe(styled_df, use_container_width=True, hide_index=True, column_config=col_config)
+                # Render without forced wide column configurations so columns fit text naturally
+                st.dataframe(styled_df, use_container_width=True, hide_index=True)
                 
                 csv = df.to_csv(index=False).encode('utf-8')
                 st.download_button(
