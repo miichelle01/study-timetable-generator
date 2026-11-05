@@ -121,7 +121,8 @@ for i in range(int(num_subjects)):
             
             top_name = st.text_input(f"Topic Name {j+1}", key=f"top_name_{i}_{j}")
             diff = st.slider(f"Difficulty {j+1} (1-5)", 1, 5, value=3, key=f"diff_{i}_{j}")
-            est_hours = st.number_input(f"Hours {j+1}", min_value=0.5, max_value=10.0, value=2.0, step=0.5, key=f"hrs_{i}_{j}")
+            # Hours range updated to min 0.5 (30 mins) and max 4.0
+            est_hours = st.number_input(f"Hours {j+1}", min_value=0.5, max_value=4.0, value=2.0, step=0.5, key=f"hrs_{i}_{j}")
             
             if top_name:
                 subject_topics.append({
@@ -140,7 +141,7 @@ for i in range(int(num_subjects)):
     st.sidebar.divider()
 
 # --- MAIN SCREEN TIMETABLE GENERATION ---
-st.subheader("Your Study Timetable")
+st.subheader("🗓️ Your Optimized Study Timetable")
 
 if st.button("🚀 Generate Your Timetable", type="primary"):
     if end_hour <= start_hour:
