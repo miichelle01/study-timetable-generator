@@ -287,42 +287,82 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                 df = pd.DataFrame(results)
                 st.success("Timetable generated successfully with all breaks!")
                 
-                def style_timetable(dataframe):
-                    unique_subjects = [s for s in dataframe['Subject'].unique() if not any(b in s for b in ["Break"])]
-                    colors = [
-                        'background-color: #ffebee; color: black;', # Soft Red
-                        'background-color: #e8f5e9; color: black;', # Soft Green
-                        'background-color: #e3f2fd; color: black;', # Soft Blue
-                        'background-color: #fff3e0; color: black;', # Soft Orange
-                        'background-color: #f3e5f5; color: black;', # Soft Purple
-                        'background-color: #e0f7fa; color: black;', # Soft Cyan
-                        'background-color: #fce4ec; color: black;'  # Soft Pink
-                    ]
-                    color_map = {subj: colors[i % len(colors)] for i, subj in enumerate(unique_subjects)}
-                    
-                    def color_rows(row):
-                        subj = row['Subject']
-                        if "Meal Break" in subj:
-                            return ['background-color: #fffde7; color: #795548; font-style: italic;' for _ in row]
-                        elif "Short Break" in subj:
-                            return ['background-color: #fff8e1; color: #f57f17; font-style: italic;' for _ in row]
-                        elif "Long Break" in subj:
-                            return ['background-color: #e0f2f1; color: #00796b; font-style: italic;' for _ in row]
-                        return [color_map.get(subj, '') for _ in row]
-                    
-                    return dataframe.style.apply(color_rows, axis=1).hide(axis="index")
-
-                styled_df = style_timetable(df)
+                # Assign distinct pastel colors to subjects
+                unique_subjects = [s for s in df['Subject'].unique() if not any(b in s for b in ["Break"])]
+                colors = ['#ffebee', '#e8f5e9', '#e3f2fd', '#fff3e0', '#f3e5f5', '#e0f7fa', '#fce4ec']
+                color_map = {subj: colors[i % len(colors)] for i, subj in enumerate(unique_subjects)}
                 
-                # Using st.table instead of st.dataframe so columns automatically shrink-wrap to content length
-                st.table(styled_df)
+                # Build custom HTML table that shrink-wraps perfectly to content width and removes bullets/dots
+                html_table = """
+                <style>
+                    .custom-timetable {
+                        border-collapse: collapse;
+                        width: auto;
+                        font-family: sans-serif;
+                        font-size: 14px;
+                        margin-bottom: 20px;
+                    }
+                    .custom-timetable th, .custom-timetable td {
+                        border: 1px solid #ddd;
+                        padding: 8px 12px;
+                        text-align: left;
+                        white-space: nowrap;
+                    }
+                    .custom-timetable th {
+                        background-color: #f0f2f6;
+                        font-weight: bold;
+                        color: #31333F;
+                    }
+                </style>
+                <table class="custom-timetable">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Subject</th>
+                            <th>Topic</th>
+                            <th>Difficulty</th>
+                            <th>Exam Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                """
+                
+                for _, row in df.iterrows():
+                    subj = row['Subject']
+                    # Determine row background color
+                    if "Meal Break" in subj:
+                        row_style = "background-color: #fffde7; color: #795548; font-style: italic;"
+                    elif "Short Break" in subj:
+                        row_style = "background-color: #fff8e1; color: #f57f17; font-style: italic;"
+                    elif "Long Break" in subj:
+                        row_style = "background-color: #e0f2f1; color: #00796b; font-style: italic;"
+                    else:
+                        bg_color = color_map.get(subj, '#ffffff')
+                        row_style = f"background-color: {bg_color}; color: black;"
+                        
+                    html_table += f"""
+                        <tr style="{row_style}">
+                            <td>{row['Time']}</td>
+                            <td>{row['Subject']}</td>
+                            <td>{row['Topic']}</td>
+                            <td>{row['Difficulty']}</td>
+                            <td>{row['Exam Date']}</td>
+                        </tr>
+                    """
+                
+                html_table += """
+                    </tbody>
+                </table>
+                """
+                
+                st.markdown(html_table, unsafe_allow_html=True)
                 
                 csv = df.to_csv(index=False).encode('utf-8')
                 st.download_button(
                     label="📥 Download Timetable as CSV",
                     data=csv,
                     file_name="my_study_timetable.csv",
-                    mime="text/css",
+                    mime="text/csv",
                 )
             else:
                 st.warning("Not enough available study slots to fit the required hours. Try widening your daily time window or increasing your total days!")
