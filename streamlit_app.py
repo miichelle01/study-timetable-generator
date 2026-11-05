@@ -51,7 +51,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
         return schedule_items
         
     pool_index = 0
-    current_topic_hours_left = pool[0]["topic"].estimated_hours  # Fixed: dot notation for dataclass
+    current_topic_hours_left = pool[0]["topic"].estimated_hours
     
     for day_offset in range(1, num_days + 1):
         current_day = date.today() + timedelta(days=day_offset)
@@ -77,7 +77,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                 schedule_items.append(ScheduleItem(
                     time_str=f"{start_t} - {end_t}",
                     subject="🍽️ Meal Break",
-                    topic='"Work with no play makes Jack a dull boy"',
+                    topic=f"Lunch Break ({lunch_mins} mins)",
                     exam_date="-",
                     is_break=True
                 ))
@@ -95,7 +95,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                 schedule_items.append(ScheduleItem(
                     time_str=f"{start_t} - {end_t}",
                     subject="🍽️ Meal Break",
-                    topic='"Work with no play makes Jack a dull boy"',
+                    topic=f"Dinner Break ({lunch_mins} mins)",
                     exam_date="-",
                     is_break=True
                 ))
@@ -132,7 +132,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
             if current_topic_hours_left <= 0:
                 pool_index += 1
                 if pool_index < len(pool):
-                    current_topic_hours_left = pool[pool_index]["topic"].estimated_hours  # Fixed: dot notation
+                    current_topic_hours_left = pool[pool_index]["topic"].estimated_hours
                 
                 # Rule: Studied for 2 hours or less -> Short Break
                 if curr_hour < end_hour:
@@ -145,7 +145,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     schedule_items.append(ScheduleItem(
                         time_str=f"{s_start} - {s_end}",
                         subject="☕ Short Break",
-                        topic='"Work with no play makes Jack a dull boy"',
+                        topic=f"Short Break ({short_break_mins} mins)",
                         exam_date="-",
                         is_break=True
                     ))
@@ -162,7 +162,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     schedule_items.append(ScheduleItem(
                         time_str=f"{l_start} - {l_end}",
                         subject="🧘 Long Break",
-                        topic='"Work with no play makes Jack a dull boy"',
+                        topic=f"Intensive Study Rest Break ({long_break_mins} mins)",
                         exam_date="-",
                         is_break=True
                     ))
