@@ -146,16 +146,16 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
             current_topic_hours_left -= work_hours
             continuous_study_hours += work_hours
             
-            # Check if we are hitting a meal break right now
-            is_hit_meal = (curr_hour == 13 and curr_min == 0) or (curr_hour == 19 and curr_min == 0)
+            # Check if we are within 30 minutes of a meal break (e.g., 12:30+ or 18:30+)
+            is_near_meal = (curr_hour == 12 and curr_min >= 30) or (curr_hour == 18 and curr_min >= 30)
 
             if current_topic_hours_left <= 0:
                 pool_index += 1
                 if pool_index < len(pool):
                     current_topic_hours_left = pool[pool_index]["topic"].estimated_hours
                 
-                # Insert short break between topics if not hitting a meal break and day isn't over
-                if pool_index < len(pool) and curr_hour < end_hour and not is_hit_meal:
+                # Insert short break only if NOT near a meal break
+                if pool_index < len(pool) and curr_hour < end_hour and not is_near_meal:
                     s_start = f"{curr_hour:02d}:{curr_min:02d}"
                     t_min = curr_min + short_break_mins
                     curr_hour += t_min // 60
@@ -172,8 +172,8 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     ))
                     continuous_study_hours = 0.0
             else:
-                # Insert long break if studied continuously for > 2 hours
-                if continuous_study_hours > 2.0 and curr_hour < end_hour and pool_index < len(pool) and not is_hit_meal:
+                # Insert long break only if NOT near a meal break
+                if continuous_study_hours > 2.0 and curr_hour < end_hour and pool_index < len(pool) and not is_near_meal:
                     l_start = f"{curr_hour:02d}:{curr_min:02d}"
                     t_min = curr_min + long_break_mins
                     curr_hour += t_min // 60
