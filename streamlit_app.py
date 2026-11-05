@@ -24,6 +24,7 @@ class StudySlot:
     end_hour: int
     assigned_subject: str = None
     assigned_topic: str = None
+    exam_date: str = None  # Added to track exam date per slot
 
 def calculate_priority(exam_date: date, difficulty: int) -> float:
     days_left = max(1, (exam_date - date.today()).days)
@@ -48,7 +49,8 @@ def generate_timetable(subjects: List[Subject], available_slots: List[StudySlot]
                 pool.append({
                     "subject": subj.name,
                     "topic": topic,
-                    "priority": priority
+                    "priority": priority,
+                    "exam_date": str(subj.exam_date)
                 })
     
     pool.sort(key=lambda x: x["priority"], reverse=True)
@@ -70,6 +72,7 @@ def generate_timetable(subjects: List[Subject], available_slots: List[StudySlot]
                 
                 slot.assigned_subject = item["subject"]
                 slot.assigned_topic = item["topic"].name
+                slot.exam_date = item["exam_date"]
                 last_subject = item["subject"]
                 
                 if slot_duration >= hours_needed:
@@ -183,7 +186,7 @@ if st.button("Generate Your Timetable", type="primary"):
             # Generate the timetable
             schedule = generate_timetable(student_subjects, slots)
             
-            # Format for display
+            # Format for display (Exam Date is now the last column)
             results = []
             for slot in schedule:
                 if slot.assigned_subject:
@@ -191,7 +194,8 @@ if st.button("Generate Your Timetable", type="primary"):
                         "Date": str(slot.date),
                         "Time": f"{slot.start_hour}:00 - {slot.end_hour}:00",
                         "Subject": slot.assigned_subject,
-                        "Topic": slot.assigned_topic
+                        "Topic": slot.assigned_topic,
+                        "Exam Date": slot.exam_date
                     })
                     
             if results:
