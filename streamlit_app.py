@@ -24,7 +24,7 @@ class StudySlot:
     end_hour: int
     assigned_subject: str = None
     assigned_topic: str = None
-    exam_date: str = None  # Added to track exam date per slot
+    exam_date: str = None
 
 def calculate_priority(exam_date: date, difficulty: int) -> float:
     days_left = max(1, (exam_date - date.today()).days)
@@ -186,12 +186,11 @@ if st.button("Generate Your Timetable", type="primary"):
             # Generate the timetable
             schedule = generate_timetable(student_subjects, slots)
             
-            # Format for display (Exam Date is now the last column)
+            # Format for display (Date column removed, leaving Time, Subject, Topic, Exam Date)
             results = []
             for slot in schedule:
                 if slot.assigned_subject:
                     results.append({
-                        "Date": str(slot.date),
                         "Time": f"{slot.start_hour}:00 - {slot.end_hour}:00",
                         "Subject": slot.assigned_subject,
                         "Topic": slot.assigned_topic,
