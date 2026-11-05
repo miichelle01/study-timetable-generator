@@ -120,7 +120,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
             total_minutes_start = curr_hour * 60 + curr_min
             total_minutes_end = int(total_minutes_start + (work_hours * 60))
             
-            # Prevent a topic study block from spilling awkwardly past 13:00 or 19:00 if a meal is next
+            # Prevent studying past 13:00 or 19:00 if a meal break is next
             next_meal_hour = 13 if (curr_hour < 13) else (19 if (curr_hour < 19 and curr_hour >= 13) else None)
             if next_meal_hour and total_minutes_end > (next_meal_hour * 60):
                 total_minutes_end = next_meal_hour * 60
@@ -146,13 +146,15 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
             current_topic_hours_left -= work_hours
             continuous_study_hours += work_hours
             
+            # Check if we are hitting a meal break right now
+            is_hit_meal = (curr_hour == 13 and curr_min == 0) or (curr_hour == 19 and curr_min == 0)
+
             if current_topic_hours_left <= 0:
                 pool_index += 1
                 if pool_index < len(pool):
                     current_topic_hours_left = pool[pool_index]["topic"].estimated_hours
                 
-                # Only add a short break if we aren't about to hit a meal break anyway
-                is_hit_meal = (curr_hour == 12 and curr_min >= 50) or (curr_hour == 18 and curr_min >= 50)
+                # Insert short break between topics if not hitting a meal break and day isn't over
                 if pool_index < len(pool) and curr_hour < end_hour and not is_hit_meal:
                     s_start = f"{curr_hour:02d}:{curr_min:02d}"
                     t_min = curr_min + short_break_mins
@@ -170,7 +172,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     ))
                     continuous_study_hours = 0.0
             else:
-                is_hit_meal = (curr_hour == 12 and curr_min >= 50) or (curr_hour == 18 and curr_min >= 50)
+                # Insert long break if studied continuously for > 2 hours
                 if continuous_study_hours > 2.0 and curr_hour < end_hour and pool_index < len(pool) and not is_hit_meal:
                     l_start = f"{curr_hour:02d}:{curr_min:02d}"
                     t_min = curr_min + long_break_mins
