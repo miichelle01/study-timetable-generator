@@ -302,4 +302,14 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                     return dataframe.style.apply(color_rows, axis=1)
 
                 styled_df = style_timetable(df)
-                st.dataframe(styled_df
+                st.dataframe(styled_df, use_container_width=True, hide_index=True)
+                
+                csv = df.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    label="📥 Download Timetable as CSV",
+                    data=csv,
+                    file_name="my_study_timetable.csv",
+                    mime="text/csv",
+                )
+            else:
+                st.warning("Not enough available study slots to fit the required hours. Try widening your daily time window or increasing your total days!")
