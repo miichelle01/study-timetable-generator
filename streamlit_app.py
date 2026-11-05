@@ -292,44 +292,43 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                 colors = ['#ffebee', '#e8f5e9', '#e3f2fd', '#fff3e0', '#f3e5f5', '#e0f7fa', '#fce4ec']
                 color_map = {subj: colors[i % len(colors)] for i, subj in enumerate(unique_subjects)}
                 
-                # Build custom HTML table that shrink-wraps perfectly to content width and removes bullets/dots
-                html_table = """
-                <style>
-                    .custom-timetable {
-                        border-collapse: collapse;
-                        width: auto;
-                        font-family: sans-serif;
-                        font-size: 14px;
-                        margin-bottom: 20px;
-                    }
-                    .custom-timetable th, .custom-timetable td {
-                        border: 1px solid #ddd;
-                        padding: 8px 12px;
-                        text-align: left;
-                        white-space: nowrap;
-                    }
-                    .custom-timetable th {
-                        background-color: #f0f2f6;
-                        font-weight: bold;
-                        color: #31333F;
-                    }
-                </style>
-                <table class="custom-timetable">
-                    <thead>
-                        <tr>
-                            <th>Time</th>
-                            <th>Subject</th>
-                            <th>Topic</th>
-                            <th>Difficulty</th>
-                            <th>Exam Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                """
+                # Construct clean HTML table parts
+                html_parts = [
+                    """<style>
+                        .custom-timetable {
+                            border-collapse: collapse;
+                            width: auto;
+                            font-family: sans-serif;
+                            font-size: 14px;
+                            margin-bottom: 20px;
+                        }
+                        .custom-timetable th, .custom-timetable td {
+                            border: 1px solid #ddd;
+                            padding: 8px 12px;
+                            text-align: left;
+                            white-space: nowrap;
+                        }
+                        .custom-timetable th {
+                            background-color: #f0f2f6;
+                            font-weight: bold;
+                            color: #31333F;
+                        }
+                    </style>
+                    <table class="custom-timetable">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Subject</th>
+                                <th style="min-width: 150px;">Topic</th>
+                                <th>Difficulty</th>
+                                <th>Exam Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>"""
+                ]
                 
                 for _, row in df.iterrows():
                     subj = row['Subject']
-                    # Determine row background color
                     if "Meal Break" in subj:
                         row_style = "background-color: #fffde7; color: #795548; font-style: italic;"
                     elif "Short Break" in subj:
@@ -340,7 +339,7 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                         bg_color = color_map.get(subj, '#ffffff')
                         row_style = f"background-color: {bg_color}; color: black;"
                         
-                    html_table += f"""
+                    html_parts.append(f"""
                         <tr style="{row_style}">
                             <td>{row['Time']}</td>
                             <td>{row['Subject']}</td>
@@ -348,12 +347,10 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                             <td>{row['Difficulty']}</td>
                             <td>{row['Exam Date']}</td>
                         </tr>
-                    """
+                    """)
                 
-                html_table += """
-                    </tbody>
-                </table>
-                """
+                html_parts.append("</tbody></table>")
+                html_table = "".join(html_parts)
                 
                 st.markdown(html_table, unsafe_allow_html=True)
                 
