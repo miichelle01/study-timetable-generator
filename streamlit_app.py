@@ -39,7 +39,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     "subject": subj.name,
                     "topic": topic,
                     "priority": priority,
-                    "exam_date": str(subj.exam_date)
+                    "exam_date": subj.exam_date.strftime("%d/%m/%Y") # Formatted as DD/MM/YYYY
                 })
     
     pool.sort(key=lambda x: x["priority"], reverse=True)
@@ -218,7 +218,7 @@ for i in range(int(num_subjects)):
                     "topic": top_name,
                     "difficulty": diff,
                     "estimated_hours": est_hours,
-                    "exam_date": str(ex_date)
+                    "exam_date": ex_date  # Storing date object directly for easy formatting
                 })
         
         submitted = st.form_submit_button(f"Save Subject {i+1}")
@@ -247,7 +247,7 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                 s_name = s["subject"]
                 if s_name not in subject_dict:
                     subject_dict[s_name] = {
-                        "exam_date": datetime.strptime(s["exam_date"], "%Y-%m-%d").date(),
+                        "exam_date": s["exam_date"],
                         "topics": []
                     }
                 
