@@ -76,7 +76,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                 schedule_items.append(ScheduleItem(
                     time_str=f"{start_t} - {end_t}",
                     subject="🍽️ Meal Break",
-                    topic=""Work with no play makes Jack a dull boy"",
+                    topic='"Work with no play makes Jack a dull boy"',
                     exam_date="-",
                     is_break=True
                 ))
@@ -94,7 +94,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                 schedule_items.append(ScheduleItem(
                     time_str=f"{start_t} - {end_t}",
                     subject="🍽️ Meal Break",
-                    topic="Work with no play makes Jack a dull boy",
+                    topic='"Work with no play makes Jack a dull boy"',
                     exam_date="-",
                     is_break=True
                 ))
@@ -144,7 +144,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     schedule_items.append(ScheduleItem(
                         time_str=f"{s_start} - {s_end}",
                         subject="☕ Short Break",
-                        topic="Work with no play makes Jack a dull boy",
+                        topic='"Work with no play makes Jack a dull boy"',
                         exam_date="-",
                         is_break=True
                     ))
@@ -161,7 +161,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     schedule_items.append(ScheduleItem(
                         time_str=f"{l_start} - {l_end}",
                         subject="🧘 Long Break",
-                        topic="Work with no play makes Jack a dull boy",
+                        topic='"Work with no play makes Jack a dull boy"',
                         exam_date="-",
                         is_break=True
                     ))
@@ -182,7 +182,7 @@ start_hour = st.sidebar.slider("Daily Start Hour (24h):", min_value=0, max_value
 end_hour = st.sidebar.slider("Daily End Hour (24h):", min_value=0, max_value=23, value=21)
 
 st.sidebar.divider()
-st.sidebar.header("Work with no play makes Jack a dull boy")
+st.sidebar.header('"Work with no play makes Jack a dull boy"')
 lunch_mins = st.sidebar.slider("Meal Break (mins):", min_value=30, max_value=60, value=45, step=5)
 short_break_mins = st.sidebar.slider("Short Break (mins):", min_value=5, max_value=15, value=10, step=5)
 long_break_mins = st.sidebar.slider("Long Break (mins):", min_value=15, max_value=30, value=20, step=5)
