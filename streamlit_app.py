@@ -163,32 +163,4 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     t_min = curr_min + long_break_mins
                     curr_hour += t_min // 60
                     curr_min = t_min % 60
-                    l_end = f"{curr_hour:02d}:{curr_min:02d}"
-                    
-                    schedule_items.append(ScheduleItem(
-                        time_str=f"{l_start}\n{l_end}",
-                        subject="Long Break",
-                        topic="",
-                        difficulty_str="",
-                        exam_date="",
-                        is_break=True
-                    ))
-                    continuous_study_hours = 0.0
-                    
-    return schedule_items
-
-# --- STREAMLIT UI ---
-st.title("📚 Study Timetable Generator 📚")
-st.caption("##### *Plan better. Ace your exams.*")
-st.divider()  
-
-# Sidebar controls for availability & breaks
-st.sidebar.markdown("<h2 style='font-size: 26px; font-weight: bold;'>Your Plan</h2>", unsafe_allow_html=True)
-
-start_hour = st.sidebar.slider("Daily Start Hour (24h):", min_value=0, max_value=23, value=9)
-end_hour = st.sidebar.slider("Daily End Hour (24h):", min_value=0, max_value=23, value=21)
-
-st.sidebar.divider()
-st.sidebar.header('"Work with no play makes Jack a dull boy"')
-lunch_mins = st.sidebar.slider("Meal Break (mins):", min_value=30, max_value=60, value=45, step=5)
-short_break_
+                    l_end = f"{curr_hour
