@@ -197,7 +197,28 @@ if st.button("Generate Your Timetable", type="primary"):
             if results:
                 df = pd.DataFrame(results)
                 st.success("Timetable generated successfully!")
-                st.dataframe(df, use_container_width=True, hide_index=True)
+                
+                # --- COLORFUL STYLING FUNCTION ---
+                def style_timetable(dataframe):
+                    unique_subjects = dataframe['Subject'].unique()
+                    colors = [
+                        'background-color: #ffebee; color: black;', # Soft Red
+                        'background-color: #e8f5e9; color: black;', # Soft Green
+                        'background-color: #e3f2fd; color: black;', # Soft Blue
+                        'background-color: #fff3e0; color: black;', # Soft Orange
+                        'background-color: #f3e5f5; color: black;', # Soft Purple
+                        'background-color: #e0f7fa; color: black;', # Soft Cyan
+                        'background-color: #fce4ec; color: black;'  # Soft Pink
+                    ]
+                    color_map = {subj: colors[i % len(colors)] for i, subj in enumerate(unique_subjects)}
+                    
+                    def color_rows(row):
+                        return [color_map.get(row['Subject'], '') for _ in row]
+                    
+                    return dataframe.style.apply(color_rows, axis=1)
+
+                styled_df = style_timetable(df)
+                st.dataframe(styled_df, use_container_width=True, hide_index=True)
                 
                 # Download CSV button
                 csv = df.to_csv(index=False).encode('utf-8')
