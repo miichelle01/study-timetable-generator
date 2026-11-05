@@ -310,19 +310,19 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                             return ['background-color: #e0f2f1; color: #00796b; font-style: italic;' for _ in row]
                         return [color_map.get(subj, '') for _ in row]
                     
-                    return dataframe.style.apply(color_rows, axis=1)
+                    return dataframe.style.apply(color_rows, axis=1).hide(axis="index")
 
                 styled_df = style_timetable(df)
                 
-                # Render without forced wide column configurations so columns fit text naturally
-                st.dataframe(styled_df, use_container_width=True, hide_index=True)
+                # Using st.table instead of st.dataframe so columns automatically shrink-wrap to content length
+                st.table(styled_df)
                 
                 csv = df.to_csv(index=False).encode('utf-8')
                 st.download_button(
                     label="📥 Download Timetable as CSV",
                     data=csv,
                     file_name="my_study_timetable.csv",
-                    mime="text/csv",
+                    mime="text/css",
                 )
             else:
                 st.warning("Not enough available study slots to fit the required hours. Try widening your daily time window or increasing your total days!")
