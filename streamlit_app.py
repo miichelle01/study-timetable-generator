@@ -76,7 +76,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                 schedule_items.append(ScheduleItem(
                     time_str=f"{start_t} - {end_t}",
                     subject="🍽️ Meal Break",
-                    topic="Work with no play makes Jack a dull boy",
+                    topic=""Work with no play makes Jack a dull boy"",
                     exam_date="-",
                     is_break=True
                 ))
