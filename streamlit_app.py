@@ -174,8 +174,8 @@ st.title("📚 Study Timetable Generator 📚")
 st.caption("##### *Plan better. Ace your exams.*")
 st.divider()  
 
-# Sidebar controls for availability & breaks
-st.sidebar.header("Your Plan")
+# Sidebar controls for availability & breaks (Made "Your Plan" a larger markdown header)
+st.sidebar.markdown("## Your Plan")
 num_days = st.sidebar.slider("Days to cover:", min_value=3, max_value=30, value=7)
 
 start_hour = st.sidebar.slider("Daily Start Hour (24h):", min_value=0, max_value=23, value=9)
@@ -309,7 +309,7 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                     label="📥 Download Timetable as CSV",
                     data=csv,
                     file_name="my_study_timetable.csv",
-                    mime="text/csv",
+                    mime="text/type",
                 )
             else:
                 st.warning("Not enough available study slots to fit the required hours. Try widening your daily time window or increasing your total days!")
