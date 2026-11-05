@@ -51,7 +51,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
         return schedule_items
         
     pool_index = 0
-    current_topic_hours_left = pool[0]["topic"]["estimated_hours"]
+    current_topic_hours_left = pool[0]["topic"].estimated_hours  # Fixed: dot notation for dataclass
     
     for day_offset in range(1, num_days + 1):
         current_day = date.today() + timedelta(days=day_offset)
@@ -132,7 +132,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
             if current_topic_hours_left <= 0:
                 pool_index += 1
                 if pool_index < len(pool):
-                    current_topic_hours_left = pool[pool_index]["topic"]["estimated_hours"]
+                    current_topic_hours_left = pool[pool_index]["topic"].estimated_hours  # Fixed: dot notation
                 
                 # Rule: Studied for 2 hours or less -> Short Break
                 if curr_hour < end_hour:
