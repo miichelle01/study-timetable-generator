@@ -140,7 +140,7 @@ for i in range(int(num_subjects)):
     st.sidebar.divider()
 
 # --- MAIN SCREEN TIMETABLE GENERATION ---
-st.subheader("🗓️ Your Study Timetable")
+st.subheader("Your Study Timetable")
 
 if st.button("🚀 Generate Your Timetable", type="primary"):
     if end_hour <= start_hour:
