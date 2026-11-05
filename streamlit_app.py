@@ -140,7 +140,8 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                 if pool_index < len(pool):
                     current_topic_hours_left = pool[pool_index]["topic"].estimated_hours
                 
-                if curr_hour < end_hour:
+                # Only add a short break if there are still topics left to study and time left today
+                if pool_index < len(pool) and curr_hour < end_hour:
                     s_start = f"{curr_hour:02d}:{curr_min:02d}"
                     t_min = curr_min + short_break_mins
                     curr_hour += t_min // 60
@@ -157,7 +158,8 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     ))
                     continuous_study_hours = 0.0
             else:
-                if continuous_study_hours > 2.0 and curr_hour < end_hour:
+                # Only add a long break if there are still topics left in the pool and time left
+                if continuous_study_hours > 2.0 and curr_hour < end_hour and pool_index < len(pool):
                     l_start = f"{curr_hour:02d}:{curr_min:02d}"
                     t_min = curr_min + long_break_mins
                     curr_hour += t_min // 60
