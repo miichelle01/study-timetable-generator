@@ -325,7 +325,12 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                     body {{
                         font-family: sans-serif;
                         margin: 0;
-                        padding: 0;
+                        padding: 20px;
+                        background-color: white;
+                    }}
+                    h2 {{
+                        color: #31333F;
+                        margin-bottom: 15px;
                     }}
                     .custom-timetable {{
                         border-collapse: collapse;
@@ -334,7 +339,7 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                     }}
                     .custom-timetable th, .custom-timetable td {{
                         border: 1px solid #ddd;
-                        padding: 8px 12px;
+                        padding: 10px 14px;
                         text-align: left;
                         white-space: nowrap;
                     }}
@@ -343,37 +348,55 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                         font-weight: bold;
                         color: #31333F;
                     }}
+                    /* PRINT STYLING: Hides Streamlit chrome, shows only the timetable table */
+                    @media print {{
+                        body * {{
+                            visibility: hidden;
+                        }}
+                        #printable-area, #printable-area * {{
+                            visibility: visible;
+                        }}
+                        #printable-area {{
+                            position: absolute;
+                            left: 0;
+                            top: 0;
+                            width: 100%;
+                        }}
+                        .no-print {{
+                            display: none;
+                        }}
+                    }}
                 </style>
                 </head>
                 <body>
-                    <table class="custom-timetable">
-                        <thead>
-                            <tr>
-                                <th>Time</th>
-                                <th>Subject</th>
-                                <th>Topic</th>
-                                <th>Difficulty</th>
-                                <th>Exam Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {rows_html}
-                        </tbody>
-                    </table>
+                    <div id="printable-area">
+                        <h2>📚 My Study Timetable</h2>
+                        <table class="custom-timetable">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Subject</th>
+                                    <th>Topic</th>
+                                    <th>Difficulty</th>
+                                    <th>Exam Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {rows_html}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="no-print" style="margin-top: 20px;">
+                        <button onclick="window.print()" style="background-color: #ff4b4b; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 15px; font-family: sans-serif; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                            🖨️ Print / Save as PDF
+                        </button>
+                    </div>
                 </body>
                 </html>
                 """
                 
-                calc_height = min(600, 60 + (len(df) * 42))
+                calc_height = min(700, 100 + (len(df) * 45))
                 components.html(html_table, height=calc_height, scrolling=True)
-                
-                # Built-in Print / Save as PDF Button (Zero External Dependencies)
-                components.html("""
-                <div style="margin-top: 15px;">
-                    <button onclick="window.print()" style="background-color: #ff4b4b; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; font-family: sans-serif;">
-                        🖨️ Print / Save as PDF
-                    </button>
-                </div>
-                """, height=60)
             else:
                 st.warning("Not enough available study slots to fit the required hours. Try widening your daily time window or increasing your total days!")
