@@ -152,14 +152,14 @@ st.caption("##### *Plan better. Ace your exams with automated breaks.*")
 st.divider()  
 
 # Sidebar controls for availability & breaks
-st.sidebar.header("Timetable Settings")
+st.sidebar.header("Your Plan")
 num_days = st.sidebar.slider("Days to cover:", min_value=3, max_value=30, value=7)
 
 start_hour = st.sidebar.slider("Daily Start Hour (24h):", min_value=0, max_value=23, value=9)
 end_hour = st.sidebar.slider("Daily End Hour (24h):", min_value=0, max_value=23, value=17)
 
 st.sidebar.divider()
-st.sidebar.header("Break Configurations")
+st.sidebar.header("Your Breaks")
 lunch_mins = st.sidebar.slider("Lunch / Meal Break (mins):", min_value=30, max_value=60, value=45, step=5)
 short_break_mins = st.sidebar.slider("Short Break (mins):", min_value=5, max_value=15, value=10, step=5)
 long_break_mins = st.sidebar.slider("Long Break (mins):", min_value=15, max_value=30, value=20, step=5)
