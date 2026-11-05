@@ -76,7 +76,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                 schedule_items.append(ScheduleItem(
                     time_str=f"{start_t} - {end_t}",
                     subject="🍽️ Meal Break",
-                    topic=f"Lunch Break ({lunch_mins} mins)",
+                    topic="Work with no play makes Jack a dull boy",
                     exam_date="-",
                     is_break=True
                 ))
@@ -94,7 +94,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                 schedule_items.append(ScheduleItem(
                     time_str=f"{start_t} - {end_t}",
                     subject="🍽️ Meal Break",
-                    topic=f"Dinner Break ({lunch_mins} mins)",
+                    topic="Work with no play makes Jack a dull boy",
                     exam_date="-",
                     is_break=True
                 ))
@@ -144,7 +144,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     schedule_items.append(ScheduleItem(
                         time_str=f"{s_start} - {s_end}",
                         subject="☕ Short Break",
-                        topic=f"Short Break ({short_break_mins} mins)",
+                        topic="Work with no play makes Jack a dull boy",
                         exam_date="-",
                         is_break=True
                     ))
@@ -161,7 +161,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     schedule_items.append(ScheduleItem(
                         time_str=f"{l_start} - {l_end}",
                         subject="🧘 Long Break",
-                        topic=f"Intensive Study Rest Break ({long_break_mins} mins)",
+                        topic="Work with no play makes Jack a dull boy",
                         exam_date="-",
                         is_break=True
                     ))
@@ -171,7 +171,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
 
 # --- STREAMLIT UI ---
 st.title("📚 Study Timetable Generator 📚")
-st.caption("##### *Plan better. Ace your exams with smart breaks and meal times.*")
+st.caption("##### *Plan better. Ace your exams.*")
 st.divider()  
 
 # Sidebar controls for availability & breaks
@@ -278,7 +278,7 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                     
             if results:
                 df = pd.DataFrame(results)
-                st.success("Timetable generated successfully with lunch and dinner breaks!")
+                st.success("Timetable generated successfully with all breaks!")
                 
                 def style_timetable(dataframe):
                     unique_subjects = [s for s in dataframe['Subject'].unique() if not any(b in s for b in ["Break"])]
@@ -297,19 +297,4 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                         subj = row['Subject']
                         if "Break" in subj:
                             return ['background-color: #f5f5f5; color: #666666; font-style: italic;' for _ in row]
-                        return [color_map.get(subj, '') for _ in row]
-                    
-                    return dataframe.style.apply(color_rows, axis=1)
-
-                styled_df = style_timetable(df)
-                st.dataframe(styled_df, use_container_width=True, hide_index=True)
-                
-                csv = df.to_csv(index=False).encode('utf-8')
-                st.download_button(
-                    label="📥 Download Timetable as CSV",
-                    data=csv,
-                    file_name="my_study_timetable.csv",
-                    mime="text/csv",
-                )
-            else:
-                st.warning("Not enough available study slots to fit the required hours. Try widening your daily time window or increasing your total days!")
+                        return [color_map.get(subj, '') for
