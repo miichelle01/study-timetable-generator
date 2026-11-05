@@ -205,15 +205,4 @@ st.sidebar.header("Your Subjects & Topics")
 if "saved_subjects" not in st.session_state:
     st.session_state.saved_subjects = {}
 
-num_subjects = st.sidebar.number_input("How many subjects?", min_value=1, max_value=9, value=1, step=1, key="num_subjects_input")
-
-for i in range(int(num_subjects)):
-    st.sidebar.markdown(f"### Subject {i+1}")
-    
-    sub_name = st.sidebar.text_input(f"Subject Name {i+1}", key=f"sub_name_{i}")
-    ex_date = st.sidebar.date_input(f"Exam Date {i+1}", min_value=date.today(), key=f"date_{i}")
-    num_topics = st.sidebar.number_input(f"How many topics for Subject {i+1}?", min_value=1, max_value=10, value=1, step=1, key=f"num_topics_{i}")
-    
-    with st.sidebar.form(key=f"subject_form_{i}"):
-        subject_topics = []
-        for j in range(int(num_topics)):
+num_subjects = st.sidebar.number_input("
