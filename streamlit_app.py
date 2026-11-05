@@ -187,4 +187,206 @@ end_hour = st.sidebar.slider("Daily End Hour (24h):", min_value=0, max_value=23,
 
 st.sidebar.divider()
 st.sidebar.header('Breaks Configuration')
-lunch_mins = st.sidebar.slider("Meal Break (mins):", min_value=
+lunch_mins = st.sidebar.slider("Meal Break (mins):", min_value=30, max_value=60, value=45, step=5)
+short_break_mins = st.sidebar.slider("Short Break (mins):", min_value=5, max_value=15, value=10, step=5)
+long_break_mins = st.sidebar.slider("Long Break (mins):", min_value=15, max_value=30, value=20, step=5)
+
+st.sidebar.divider()
+st.sidebar.header("Your Subjects & Topics")
+
+if "saved_subjects" not in st.session_state:
+    st.session_state.saved_subjects = {}
+
+num_subjects = st.sidebar.number_input("How many subjects?", min_value=1, max_value=9, value=1, step=1, key="num_subjects_input")
+
+for i in range(int(num_subjects)):
+    st.sidebar.markdown(f"### Subject {i+1}")
+    sub_name = st.sidebar.text_input(f"Subject Name {i+1}", key=f"sub_name_{i}")
+    ex_date = st.sidebar.date_input(f"Exam Date {i+1}", min_value=date.today(), key=f"date_{i}")
+    num_topics = st.sidebar.number_input(f"How many topics for Subject {i+1}?", min_value=1, max_value=10, value=1, step=1, key=f"num_topics_{i}")
+    
+    with st.sidebar.form(key=f"subject_form_{i}"):
+        subject_topics = []
+        for j in range(int(num_topics)):
+            top_name = st.text_input(f"Topic Name {j+1}", key=f"top_name_{i}_{j}")
+            diff = st.slider(f"Difficulty {j+1} (1-5)", 1, 5, value=3, key=f"diff_{i}_{j}")
+            est_hours = st.number_input(f"Hours {j+1}", min_value=0.5, max_value=4.0, value=0.5, step=0.5, key=f"hrs_{i}_{j}")
+            
+            if top_name:
+                subject_topics.append({
+                    "subject": sub_name,
+                    "topic": top_name,
+                    "difficulty": diff,
+                    "estimated_hours": est_hours,
+                    "exam_date": ex_date
+                })
+        
+        submitted = st.form_submit_button(f"Save Subject {i+1}")
+        if submitted and sub_name:
+            st.session_state.saved_subjects[i] = subject_topics
+            st.success(f"Saved {sub_name} with {len(subject_topics)} topics!")
+    
+    st.sidebar.divider()
+
+# --- MAIN SCREEN ---
+st.subheader("Your Study Timetable")
+
+if st.button("🚀 Generate Your Timetable", type="primary"):
+    if end_hour <= start_hour:
+        st.error("⚠️ Daily End Hour must be later than Daily Start Hour!")
+    else:
+        all_combined_tasks = []
+        for sub_idx, topics in st.session_state.saved_subjects.items():
+            all_combined_tasks.extend(topics)
+            
+        if not all_combined_tasks:
+            st.warning("⚠️ Please make sure you filled out your subject details and clicked the **'Save Subject'** button in the sidebar before generating!")
+        else:
+            subject_dict = {}
+            for s in all_combined_tasks:
+                s_name = s["subject"]
+                if s_name not in subject_dict:
+                    subject_dict[s_name] = {"exam_date": s["exam_date"], "topics": []}
+                subject_dict[s_name]["topics"].append(Topic(name=s["topic"], difficulty=s["difficulty"], estimated_hours=s["estimated_hours"]))
+                
+            student_subjects = [Subject(name=k, exam_date=v["exam_date"], topics=v["topics"]) for k, v in subject_dict.items()]
+            
+            all_exam_dates = [s.exam_date for s in student_subjects]
+            earliest_exam = min(all_exam_dates) if all_exam_dates else date.today() + timedelta(days=7)
+            num_days = max(1, (earliest_exam - date.today()).days)
+                
+            schedule = generate_schedule(student_subjects, num_days, start_hour, end_hour, lunch_mins, short_break_mins, long_break_mins)
+            
+            results = []
+            for item in schedule:
+                results.append({
+                    "Time": item.time_str,
+                    "Subject": item.subject,
+                    "Topic": item.topic,
+                    "Difficulty": item.difficulty_str,
+                    "Exam Date": item.exam_date
+                })
+                    
+            if results:
+                df = pd.DataFrame(results)
+                st.success("Timetable generated successfully with all breaks!")
+                
+                unique_subjects = [s for s in df['Subject'].unique() if not any(b in s for b in ["Break"])]
+                colors_list = ['#e3f2fd', '#e8f5e9', '#fff3e0', '#f3e5f5', '#e0f7fa', '#fce4ec', '#ffebee']
+                color_map = {subj: colors_list[i % len(colors_list)] for i, subj in enumerate(unique_subjects)}
+                
+                rows_html = ""
+                for _, row in df.iterrows():
+                    subj = row['Subject']
+                    if "Meal Break" in subj:
+                        row_style = "background-color: #fcf8e3; color: #8a6d3b; font-style: italic;"
+                    elif "Short Break" in subj:
+                        row_style = "background-color: #f4f4f4; color: #666666; font-style: italic;"
+                    elif "Long Break" in subj:
+                        row_style = "background-color: #eef2f5; color: #444444; font-style: italic;"
+                    else:
+                        bg_color = color_map.get(subj, '#ffffff')
+                        row_style = f"background-color: {bg_color}; color: #222222; font-weight: 500;"
+                        
+                    rows_html += f"""
+                    <tr style="{row_style}">
+                        <td style="white-space: pre-line; font-family: monospace; font-weight: bold;">{row['Time']}</td>
+                        <td style="font-weight: bold;">{row['Subject']}</td>
+                        <td>{row['Topic']}</td>
+                        <td style="text-align: center;">{row['Difficulty']}</td>
+                        <td style="text-align: center;">{row['Exam Date']}</td>
+                    </tr>
+                    """
+                
+                html_table = """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                <style>
+                    body {{
+                        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                        margin: 0;
+                        padding: 10px;
+                        background-color: #ffffff;
+                    }}
+                    .timetable-card {{
+                        background: white;
+                        border-radius: 10px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+                        border: 1px solid #e1e4e8;
+                        overflow: hidden;
+                        margin-bottom: 20px;
+                    }}
+                    .timetable-header {{
+                        background: #f8f9fa;
+                        padding: 15px 20px;
+                        border-bottom: 1px solid #e1e4e8;
+                    }}
+                    .timetable-header h2 {{
+                        margin: 0;
+                        color: #24292e;
+                        font-size: 18px;
+                    }}
+                    .custom-timetable {{
+                        border-collapse: collapse;
+                        width: 100%;
+                        font-size: 14px;
+                    }}
+                    .custom-timetable th {{
+                        background-color: #f1f3f5;
+                        color: #495057;
+                        font-weight: 600;
+                        text-transform: uppercase;
+                        font-size: 11px;
+                        letter-spacing: 0.5px;
+                        border-bottom: 2px solid #dee2e6;
+                        padding: 12px 16px;
+                        text-align: left;
+                    }}
+                    .custom-timetable td {{
+                        border-bottom: 1px solid #edf2f7;
+                        padding: 12px 16px;
+                        vertical-align: middle;
+                    }}
+                    .custom-timetable tr:hover {{
+                        filter: brightness(97%);
+                    }}
+                </style>
+                </head>
+                <body>
+                    <div class="timetable-card">
+                        <div class="timetable-header">
+                            <h2>🗓️ Master Study Schedule</h2>
+                        </div>
+                        <table class="custom-timetable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 15%;">Time Slot</th>
+                                    <th style="width: 25%;">Subject</th>
+                                    <th style="width: 35%;">Topic</th>
+                                    <th style="width: 12%; text-align: center;">Difficulty</th>
+                                    <th style="width: 13%; text-align: center;">Exam Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {rows_html}
+                            </tbody>
+                        </table>
+                    </div>
+                </body>
+                </html>
+                """.format(rows_html=rows_html)
+                
+                calc_height = min(750, 120 + (len(df) * 48))
+                components.html(html_table, height=calc_height, scrolling=True)
+                
+                csv_data = df.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    label="📥 Download Timetable (Spreadsheet / PDF Ready)",
+                    data=csv_data,
+                    file_name="study_timetable.csv",
+                    mime="text/csv",
+                    type="primary"
+                )
+            else:
+                st.warning("Not enough available study slots to fit the required hours. Try widening your daily time window or increasing days!")
