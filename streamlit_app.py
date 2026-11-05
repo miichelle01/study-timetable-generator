@@ -63,14 +63,6 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
         continuous_study_hours = 0.0  
         
         while curr_hour < end_hour and pool_index < len(pool):
-            current_item = pool[pool_index]
-            subject_name = current_item["subject"]
-            topic_name = current_item["topic"].name
-            topic_diff = current_item["difficulty"]
-            exam_date_str = current_item["exam_date"]
-            
-            diff_stars = "⭐" * topic_diff
-            
             # Check for Lunch Break around 13:00
             if curr_hour == 13 and curr_min == 0:
                 start_t = f"{curr_hour:02d}:{curr_min:02d}"
@@ -108,6 +100,14 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                 ))
                 continuous_study_hours = 0.0 
                 continue
+
+            current_item = pool[pool_index]
+            subject_name = current_item["subject"]
+            topic_name = current_item["topic"].name
+            topic_diff = current_item["difficulty"]
+            exam_date_str = current_item["exam_date"]
+            
+            diff_stars = "⭐" * topic_diff
             
             available_slot_hours = min(2.0, end_hour - curr_hour - (curr_min / 60.0))
             if available_slot_hours <= 0:
@@ -119,6 +119,17 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
             
             total_minutes_start = curr_hour * 60 + curr_min
             total_minutes_end = int(total_minutes_start + (work_hours * 60))
+            
+            # Prevent a topic study block from spilling awkwardly past 13:00 or 19:00 if a meal is next
+            next_meal_hour = 13 if (curr_hour < 13) else (19 if (curr_hour < 19 and curr_hour >= 13) else None)
+            if next_meal_hour and total_minutes_end > (next_meal_hour * 60):
+                total_minutes_end = next_meal_hour * 60
+                work_hours = (total_minutes_end - total_minutes_start) / 60.0
+                if work_hours <= 0:
+                    curr_hour = next_meal_hour
+                    curr_min = 0
+                    continue
+
             curr_hour = total_minutes_end // 60
             curr_min = total_minutes_end % 60
             end_t = f"{curr_hour:02d}:{curr_min:02d}"
@@ -140,8 +151,9 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                 if pool_index < len(pool):
                     current_topic_hours_left = pool[pool_index]["topic"].estimated_hours
                 
-                # Only add a short break if there are still topics left to study and time left today
-                if pool_index < len(pool) and curr_hour < end_hour:
+                # Only add a short break if we aren't about to hit a meal break anyway
+                is_hit_meal = (curr_hour == 12 and curr_min >= 50) or (curr_hour == 18 and curr_min >= 50)
+                if pool_index < len(pool) and curr_hour < end_hour and not is_hit_meal:
                     s_start = f"{curr_hour:02d}:{curr_min:02d}"
                     t_min = curr_min + short_break_mins
                     curr_hour += t_min // 60
@@ -158,8 +170,8 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     ))
                     continuous_study_hours = 0.0
             else:
-                # Only add a long break if there are still topics left in the pool and time left
-                if continuous_study_hours > 2.0 and curr_hour < end_hour and pool_index < len(pool):
+                is_hit_meal = (curr_hour == 12 and curr_min >= 50) or (curr_hour == 18 and curr_min >= 50)
+                if continuous_study_hours > 2.0 and curr_hour < end_hour and pool_index < len(pool) and not is_hit_meal:
                     l_start = f"{curr_hour:02d}:{curr_min:02d}"
                     t_min = curr_min + long_break_mins
                     curr_hour += t_min // 60
@@ -364,7 +376,6 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                 </html>
                 """
                 
-                # Dynamically calculate iframe height based on number of rows (approx 42px per row + header)
                 calc_height = min(600, 60 + (len(df) * 42))
                 components.html(html_table, height=calc_height, scrolling=True)
                 
