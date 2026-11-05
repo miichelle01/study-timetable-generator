@@ -104,53 +104,24 @@ st.sidebar.header("Your Subjects & Topics")
 if "saved_subjects" not in st.session_state:
     st.session_state.saved_subjects = {}
 
-# Demo Sample Data Button
-if st.sidebar.button("💡 Load Sample Demo Data"):
-    st.session_state.saved_subjects = {
-        0: [
-            {"subject": "Mathematics", "topic": "Calculus Derivatives", "difficulty": 4, "estimated_hours": 3.0, "exam_date": str(date.today() + timedelta(days=6))},
-            {"subject": "Mathematics", "topic": "Matrices & Vectors", "difficulty": 3, "estimated_hours": 2.0, "exam_date": str(date.today() + timedelta(days=6))}
-        ],
-        1: [
-            {"subject": "Physics", "topic": "Newton's Laws", "difficulty": 3, "estimated_hours": 2.5, "exam_date": str(date.today() + timedelta(days=12))},
-            {"subject": "Physics", "topic": "Electromagnetism", "difficulty": 5, "estimated_hours": 4.0, "exam_date": str(date.today() + timedelta(days=12))}
-        ],
-        2: [
-            {"subject": "History", "topic": "World War II Overview", "difficulty": 2, "estimated_hours": 2.0, "exam_date": str(date.today() + timedelta(days=20))}
-        ]
-    }
-    st.sidebar.success("Sample data loaded successfully!")
-    st.rerun()
+num_subjects = st.sidebar.number_input("How many subjects?", min_value=1, max_value=9, value=1, step=1, key="num_subjects_input")
 
-default_num_subjs = max(1, len(st.session_state.saved_subjects))
-num_subjects = st.sidebar.number_input("How many subjects?", min_value=1, max_value=9, value=default_num_subjs, step=1, key="num_subjects_input")
-
-# Loop through each subject form
+# Loop through each subject
 for i in range(int(num_subjects)):
     st.sidebar.markdown(f"### Subject {i+1}")
     
-    existing_sub = st.session_state.saved_subjects.get(i, [])
-    default_name = existing_sub[0]["subject"] if existing_sub else f"Subject {i+1}"
-    default_date = datetime.strptime(existing_sub[0]["exam_date"], "%Y-%m-%d").date() if existing_sub else date.today() + timedelta(days=10)
-    default_topics_count = max(1, len(existing_sub))
-    
-    sub_name = st.sidebar.text_input(f"Subject Name {i+1}", value=default_name, key=f"sub_name_{i}")
-    ex_date = st.sidebar.date_input(f"Exam Date {i+1}", value=default_date, min_value=date.today(), key=f"date_{i}")
-    
-    num_topics = st.sidebar.number_input(f"How many topics for Subject {i+1}?", min_value=1, max_value=10, value=default_topics_count, step=1, key=f"num_topics_{i}")
+    sub_name = st.sidebar.text_input(f"Subject Name {i+1}", key=f"sub_name_{i}")
+    ex_date = st.sidebar.date_input(f"Exam Date {i+1}", min_value=date.today(), key=f"date_{i}")
+    num_topics = st.sidebar.number_input(f"How many topics for Subject {i+1}?", min_value=1, max_value=10, value=1, step=1, key=f"num_topics_{i}")
     
     with st.sidebar.form(key=f"subject_form_{i}"):
         subject_topics = []
         for j in range(int(num_topics)):
             st.markdown(f"**Topic {j+1}**")
             
-            t_name_val = existing_sub[j]["topic"] if j < len(existing_sub) else ""
-            t_diff_val = existing_sub[j]["difficulty"] if j < len(existing_sub) else 3
-            t_hrs_val = existing_sub[j]["estimated_hours"] if j < len(existing_sub) else 2.0
-            
-            top_name = st.text_input(f"Topic Name {j+1}", value=t_name_val, key=f"top_name_{i}_{j}")
-            diff = st.slider(f"Difficulty {j+1} (1-5)", 1, 5, value=t_diff_val, key=f"diff_{i}_{j}")
-            est_hours = st.number_input(f"Est. Hours {j+1}", min_value=0.5, max_value=10.0, value=float(t_hrs_val), step=0.5, key=f"hrs_{i}_{j}")
+            top_name = st.text_input(f"Topic Name {j+1}", key=f"top_name_{i}_{j}")
+            diff = st.slider(f"Difficulty {j+1} (1-5)", 1, 5, value=3, key=f"diff_{i}_{j}")
+            est_hours = st.number_input(f"Est. Hours {j+1}", min_value=0.5, max_value=10.0, value=2.0, step=0.5, key=f"hrs_{i}_{j}")
             
             if top_name:
                 subject_topics.append({
@@ -169,7 +140,7 @@ for i in range(int(num_subjects)):
     st.sidebar.divider()
 
 # --- MAIN SCREEN TIMETABLE GENERATION ---
-st.subheader("🗓️ Your Optimized Study Timetable")
+st.subheader("🗓️ Your Study Timetable")
 
 if st.button("🚀 Generate Your Timetable", type="primary"):
     if end_hour <= start_hour:
