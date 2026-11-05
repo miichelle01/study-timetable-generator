@@ -1,6 +1,6 @@
 import streamlit as st
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from typing import List
 import pandas as pd
 import streamlit.components.v1 as components
@@ -46,7 +46,6 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                 })
     
     pool.sort(key=lambda x: x["priority"], reverse=True)
-    
     schedule_items = []
     
     if not pool:
@@ -56,15 +55,13 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
     current_topic_hours_left = pool[0]["topic"].estimated_hours
     
     for day_offset in range(1, num_days + 1):
-        current_day = date.today() + timedelta(days=day_offset)
         curr_hour = start_hour
         curr_min = 0
-        
         continuous_study_hours = 0.0  
         
         while curr_hour < end_hour and pool_index < len(pool):
-            # Check for Lunch Break around 13:00
-            if curr_hour == 13 and curr_min == 0:
+            # Enforce strict meal break triggers if we hit 13:00 or 19:00
+            if (curr_hour == 13 and curr_min == 0) or (curr_hour == 19 and curr_min == 0):
                 start_t = f"{curr_hour:02d}:{curr_min:02d}"
                 total_min = curr_min + lunch_mins
                 curr_hour += total_min // 60
@@ -82,23 +79,10 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                 continuous_study_hours = 0.0 
                 continue
 
-            # Check for Dinner Break around 19:00
-            if curr_hour == 19 and curr_min == 0:
-                start_t = f"{curr_hour:02d}:{curr_min:02d}"
-                total_min = curr_min + lunch_mins
-                curr_hour += total_min // 60
-                curr_min = total_min % 60
-                end_t = f"{curr_hour:02d}:{curr_min:02d}"
-                
-                schedule_items.append(ScheduleItem(
-                    time_str=f"{start_t} - {end_t}",
-                    subject="Meal Break",
-                    topic="",
-                    difficulty_str="",
-                    exam_date="",
-                    is_break=True
-                ))
-                continuous_study_hours = 0.0 
+            # If we are within 15 minutes of a meal block, snap directly to the meal break instead of awkward gaps
+            if (curr_hour == 12 and curr_min >= 45) or (curr_hour == 18 and curr_min >= 45):
+                curr_hour = 13 if curr_hour == 12 else 19
+                curr_min = 0
                 continue
 
             current_item = pool[pool_index]
@@ -106,9 +90,9 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
             topic_name = current_item["topic"].name
             topic_diff = current_item["difficulty"]
             exam_date_str = current_item["exam_date"]
-            
             diff_stars = "⭐" * topic_diff
             
+            # Limit individual study chunks to max 2 hours at a time
             available_slot_hours = min(2.0, end_hour - curr_hour - (curr_min / 60.0))
             if available_slot_hours <= 0:
                 break
@@ -116,17 +100,16 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
             work_hours = min(current_topic_hours_left, available_slot_hours)
             
             start_t = f"{curr_hour:02d}:{curr_min:02d}"
-            
             total_minutes_start = curr_hour * 60 + curr_min
             total_minutes_end = int(total_minutes_start + (work_hours * 60))
             
-            # Prevent studying past 13:00 or 19:00 if a meal break is next
-            next_meal_hour = 13 if (curr_hour < 13) else (19 if (curr_hour < 19 and curr_hour >= 13) else None)
-            if next_meal_hour and total_minutes_end > (next_meal_hour * 60):
-                total_minutes_end = next_meal_hour * 60
-                work_hours = (total_minutes_end - total_minutes_start) / 60.0
-                if work_hours <= 0:
-                    curr_hour = next_meal_hour
+            # Hard cutoff before lunch (13:00) or dinner (19:00)
+            target_meal = 13 if (curr_hour < 13) else (19 if (curr_hour < 19 and curr_hour >= 13) else None)
+            if target_meal and total_minutes_end > (target_meal * 60):
+                total_minutes_end = target_meal * 60
+                work_hours = max(0.0, (total_minutes_end - total_minutes_start) / 60.0)
+                if work_hours == 0:
+                    curr_hour = target_meal
                     curr_min = 0
                     continue
 
@@ -146,16 +129,16 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
             current_topic_hours_left -= work_hours
             continuous_study_hours += work_hours
             
-            # Check if we are within 30 minutes of a meal break (e.g., 12:30+ or 18:30+)
-            is_near_meal = (curr_hour == 12 and curr_min >= 30) or (curr_hour == 18 and curr_min >= 30)
+            # Check if we've reached a meal threshold right after this block
+            is_at_meal = (curr_hour == 13 and curr_min == 0) or (curr_hour == 19 and curr_min == 0)
 
             if current_topic_hours_left <= 0:
                 pool_index += 1
                 if pool_index < len(pool):
                     current_topic_hours_left = pool[pool_index]["topic"].estimated_hours
                 
-                # Insert short break only if NOT near a meal break
-                if pool_index < len(pool) and curr_hour < end_hour and not is_near_meal:
+                # Only insert a short break if there are tasks left, time left, and we aren't at a meal boundary
+                if pool_index < len(pool) and curr_hour < end_hour and not is_at_meal:
                     s_start = f"{curr_hour:02d}:{curr_min:02d}"
                     t_min = curr_min + short_break_mins
                     curr_hour += t_min // 60
@@ -172,8 +155,8 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     ))
                     continuous_study_hours = 0.0
             else:
-                # Insert long break only if NOT near a meal break
-                if continuous_study_hours > 2.0 and curr_hour < end_hour and pool_index < len(pool) and not is_near_meal:
+                # Insert a long break if continuous study exceeded 2 hours
+                if continuous_study_hours > 2.0 and curr_hour < end_hour and pool_index < len(pool) and not is_at_meal:
                     l_start = f"{curr_hour:02d}:{curr_min:02d}"
                     t_min = curr_min + long_break_mins
                     curr_hour += t_min // 60
@@ -302,12 +285,10 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                 df = pd.DataFrame(results)
                 st.success("Timetable generated successfully with all breaks!")
                 
-                # Assign distinct pastel colors to subjects
                 unique_subjects = [s for s in df['Subject'].unique() if not any(b in s for b in ["Break"])]
                 colors = ['#ffebee', '#e8f5e9', '#e3f2fd', '#fff3e0', '#f3e5f5', '#e0f7fa', '#fce4ec']
                 color_map = {subj: colors[i % len(colors)] for i, subj in enumerate(unique_subjects)}
                 
-                # Construct HTML table string
                 rows_html = ""
                 for _, row in df.iterrows():
                     subj = row['Subject']
