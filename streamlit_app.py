@@ -291,29 +291,29 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                 st.success("Timetable generated successfully with all breaks!")
                 
                 unique_subjects = [s for s in df['Subject'].unique() if not any(b in s for b in ["Break"])]
-                colors_list = ['#ffebee', '#e8f5e9', '#e3f2fd', '#fff3e0', '#f3e5f5', '#e0f7fa', '#fce4ec']
+                colors_list = ['#e3f2fd', '#e8f5e9', '#fff3e0', '#f3e5f5', '#e0f7fa', '#fce4ec', '#ffebee']
                 color_map = {subj: colors_list[i % len(colors_list)] for i, subj in enumerate(unique_subjects)}
                 
                 rows_html = ""
                 for _, row in df.iterrows():
                     subj = row['Subject']
                     if "Meal Break" in subj:
-                        row_style = "background-color: #fffde7; color: #795548; font-style: italic;"
+                        row_style = "background-color: #fcf8e3; color: #8a6d3b; font-style: italic;"
                     elif "Short Break" in subj:
-                        row_style = "background-color: #fff8e1; color: #f57f17; font-style: italic;"
+                        row_style = "background-color: #f4f4f4; color: #666666; font-style: italic;"
                     elif "Long Break" in subj:
-                        row_style = "background-color: #e0f2f1; color: #00796b; font-style: italic;"
+                        row_style = "background-color: #eef2f5; color: #444444; font-style: italic;"
                     else:
                         bg_color = color_map.get(subj, '#ffffff')
-                        row_style = f"background-color: {bg_color}; color: black;"
+                        row_style = f"background-color: {bg_color}; color: #222222; font-weight: 500;"
                         
                     rows_html += f"""
                     <tr style="{row_style}">
-                        <td>{row['Time']}</td>
-                        <td>{row['Subject']}</td>
+                        <td style="white-space: pre-line; font-family: monospace; font-weight: bold;">{row['Time']}</td>
+                        <td style="font-weight: bold;">{row['Subject']}</td>
                         <td>{row['Topic']}</td>
-                        <td>{row['Difficulty']}</td>
-                        <td>{row['Exam Date']}</td>
+                        <td style="text-align: center;">{row['Difficulty']}</td>
+                        <td style="text-align: center;">{row['Exam Date']}</td>
                     </tr>
                     """
                 
@@ -323,80 +323,13 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                 <head>
                 <style>
                     body {{
-                        font-family: sans-serif;
+                        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
                         margin: 0;
-                        padding: 20px;
-                        background-color: white;
+                        padding: 10px;
+                        background-color: #ffffff;
                     }}
-                    h2 {{
-                        color: #31333F;
-                        margin-bottom: 15px;
-                    }}
-                    .custom-timetable {{
-                        border-collapse: collapse;
-                        width: 100%;
-                        font-size: 14px;
-                    }}
-                    .custom-timetable th, .custom-timetable td {{
-                        border: 1px solid #ddd;
-                        padding: 10px 14px;
-                        text-align: left;
-                        white-space: nowrap;
-                    }}
-                    .custom-timetable th {{
-                        background-color: #f0f2f6;
-                        font-weight: bold;
-                        color: #31333F;
-                    }}
-                    /* PRINT STYLING: Hides Streamlit chrome, shows only the timetable table */
-                    @media print {{
-                        body * {{
-                            visibility: hidden;
-                        }}
-                        #printable-area, #printable-area * {{
-                            visibility: visible;
-                        }}
-                        #printable-area {{
-                            position: absolute;
-                            left: 0;
-                            top: 0;
-                            width: 100%;
-                        }}
-                        .no-print {{
-                            display: none;
-                        }}
-                    }}
-                </style>
-                </head>
-                <body>
-                    <div id="printable-area">
-                        <h2>📚 My Study Timetable</h2>
-                        <table class="custom-timetable">
-                            <thead>
-                                <tr>
-                                    <th>Time</th>
-                                    <th>Subject</th>
-                                    <th>Topic</th>
-                                    <th>Difficulty</th>
-                                    <th>Exam Date</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {rows_html}
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <div class="no-print" style="margin-top: 20px;">
-                        <button onclick="window.print()" style="background-color: #ff4b4b; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 15px; font-family: sans-serif; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                            🖨️ Print / Save as PDF
-                        </button>
-                    </div>
-                </body>
-                </html>
-                """
-                
-                calc_height = min(700, 100 + (len(df) * 45))
-                components.html(html_table, height=calc_height, scrolling=True)
-            else:
-                st.warning("Not enough available study slots to fit the required hours. Try widening your daily time window or increasing your total days!")
+                    .timetable-card {{
+                        background: white;
+                        border-radius: 10px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+                        border: 1px solid #e1
