@@ -60,6 +60,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
         continuous_study_hours = 0.0  
         
         while curr_hour < end_hour and pool_index < len(pool):
+            # Enforce meal breaks at 13:00 and 19:00 sharp
             if (curr_hour == 13 and curr_min == 0) or (curr_hour == 19 and curr_min == 0):
                 start_t = f"{curr_hour:02d}:{curr_min:02d}"
                 total_min = curr_min + lunch_mins
@@ -68,7 +69,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                 end_t = f"{curr_hour:02d}:{curr_min:02d}"
                 
                 schedule_items.append(ScheduleItem(
-                    time_str=f"{start_t} - {end_t}",
+                    time_str=f"{start_t}\n{end_t}",
                     subject="Meal Break",
                     topic="",
                     difficulty_str="",
@@ -78,6 +79,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                 continuous_study_hours = 0.0 
                 continue
 
+            # Snap to meal if we are within 15 minutes of 13:00 or 19:00
             if (curr_hour == 12 and curr_min >= 45) or (curr_hour == 18 and curr_min >= 45):
                 curr_hour = 13 if curr_hour == 12 else 19
                 curr_min = 0
@@ -100,7 +102,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
             total_minutes_start = curr_hour * 60 + curr_min
             total_minutes_end = int(total_minutes_start + (work_hours * 60))
             
-            target_meal = 13 if curr_hour < 13 else (19 if (curr_hour < 19 and curr_hour >= 13) else None)
+            target_meal = 13 if (curr_hour < 13) else (19 if (curr_hour < 19 and curr_hour >= 13) else None)
             if target_meal and total_minutes_end > (target_meal * 60):
                 total_minutes_end = target_meal * 60
                 work_hours = max(0.0, (total_minutes_end - total_minutes_start) / 60.0)
@@ -114,7 +116,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
             end_t = f"{curr_hour:02d}:{curr_min:02d}"
             
             schedule_items.append(ScheduleItem(
-                time_str=f"{start_t} - {end_t}",
+                time_str=f"{start_t}\n{end_t}",
                 subject=subject_name,
                 topic=topic_name,
                 difficulty_str=diff_stars,
@@ -142,7 +144,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     s_end = f"{curr_hour:02d}:{curr_min:02d}"
                     
                     schedule_items.append(ScheduleItem(
-                        time_str=f"{s_start} - {s_end}",
+                        time_str=f"{s_start}\n{s_end}",
                         subject="Short Break",
                         topic="",
                         difficulty_str="",
@@ -163,7 +165,7 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     l_end = f"{curr_hour:02d}:{curr_min:02d}"
                     
                     schedule_items.append(ScheduleItem(
-                        time_str=f"{l_start} - {l_end}",
+                        time_str=f"{l_start}\n{l_end}",
                         subject="Long Break",
                         topic="",
                         difficulty_str="",
@@ -179,14 +181,14 @@ st.title("📚 Study Timetable Generator 📚")
 st.caption("##### *Plan better. Ace your exams.*")
 st.divider()  
 
-# Sidebar controls
+# Sidebar controls for availability & breaks (Days to cover slider removed)
 st.sidebar.markdown("<h2 style='font-size: 26px; font-weight: bold;'>Your Plan</h2>", unsafe_allow_html=True)
 
 start_hour = st.sidebar.slider("Daily Start Hour (24h):", min_value=0, max_value=23, value=9)
 end_hour = st.sidebar.slider("Daily End Hour (24h):", min_value=0, max_value=23, value=21)
 
 st.sidebar.divider()
-st.sidebar.header('Breaks Configuration')
+st.sidebar.header('"Work with no play makes Jack a dull boy"')
 lunch_mins = st.sidebar.slider("Meal Break (mins):", min_value=30, max_value=60, value=45, step=5)
 short_break_mins = st.sidebar.slider("Short Break (mins):", min_value=5, max_value=15, value=10, step=5)
 long_break_mins = st.sidebar.slider("Long Break (mins):", min_value=15, max_value=30, value=20, step=5)
@@ -201,6 +203,7 @@ num_subjects = st.sidebar.number_input("How many subjects?", min_value=1, max_va
 
 for i in range(int(num_subjects)):
     st.sidebar.markdown(f"### Subject {i+1}")
+    
     sub_name = st.sidebar.text_input(f"Subject Name {i+1}", key=f"sub_name_{i}")
     ex_date = st.sidebar.date_input(f"Exam Date {i+1}", min_value=date.today(), key=f"date_{i}")
     num_topics = st.sidebar.number_input(f"How many topics for Subject {i+1}?", min_value=1, max_value=10, value=1, step=1, key=f"num_topics_{i}")
@@ -228,29 +231,45 @@ for i in range(int(num_subjects)):
     
     st.sidebar.divider()
 
-# --- MAIN SCREEN ---
+# --- MAIN SCREEN TIMETABLE GENERATION ---
 st.subheader("Your Study Timetable")
 
 if st.button("🚀 Generate Your Timetable", type="primary"):
     if end_hour <= start_hour:
-        st.error("⚠️ Daily End Hour must be later than Daily Start Hour!")
+        st.error("⚠️ Daily End Hour must be later than Daily Start Hour! Please adjust your sidebar settings.")
     else:
         all_combined_tasks = []
         for sub_idx, topics in st.session_state.saved_subjects.items():
             all_combined_tasks.extend(topics)
             
         if not all_combined_tasks:
-            st.warning("⚠️ Please make sure you filled out your subject details and clicked the **'Save Subject'** button in the sidebar before generating!")
+            st.warning("⚠️ Please make sure you filled out your subject details and clicked the **'Save Subject'** button in the sidebar before generating your timetable!")
         else:
             subject_dict = {}
             for s in all_combined_tasks:
                 s_name = s["subject"]
                 if s_name not in subject_dict:
-                    subject_dict[s_name] = {"exam_date": s["exam_date"], "topics": []}
-                subject_dict[s_name]["topics"].append(Topic(name=s["topic"], difficulty=s["difficulty"], estimated_hours=s["estimated_hours"]))
+                    subject_dict[s_name] = {
+                        "exam_date": s["exam_date"],
+                        "topics": []
+                    }
                 
-            student_subjects = [Subject(name=k, exam_date=v["exam_date"], topics=v["topics"]) for k, v in subject_dict.items()]
+                topic_obj = Topic(
+                    name=s["topic"], 
+                    difficulty=s["difficulty"], 
+                    estimated_hours=s["estimated_hours"]
+                )
+                subject_dict[s_name]["topics"].append(topic_obj)
+                
+            student_subjects = []
+            for sub_name, data in subject_dict.items():
+                student_subjects.append(Subject(
+                    name=sub_name,
+                    exam_date=data["exam_date"],
+                    topics=data["topics"]
+                ))
             
+            # Automatically calculate num_days based on the earliest exam date (defaulting to 7 if none found)
             all_exam_dates = [s.exam_date for s in student_subjects]
             earliest_exam = min(all_exam_dates) if all_exam_dates else date.today() + timedelta(days=7)
             num_days = max(1, (earliest_exam - date.today()).days)
@@ -272,121 +291,88 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                 st.success("Timetable generated successfully with all breaks!")
                 
                 unique_subjects = [s for s in df['Subject'].unique() if not any(b in s for b in ["Break"])]
-                colors_list = ['#e3f2fd', '#e8f5e9', '#fff3e0', '#f3e5f5', '#e0f7fa', '#fce4ec', '#ffebee']
-                color_map = {subj: colors_list[i % len(colors_list)] for i, subj in enumerate(unique_subjects)}
+                colors = ['#ffebee', '#e8f5e9', '#e3f2fd', '#fff3e0', '#f3e5f5', '#e0f7fa', '#fce4ec']
+                color_map = {subj: colors[i % len(colors)] for i, subj in enumerate(unique_subjects)}
                 
                 rows_html = ""
                 for _, row in df.iterrows():
                     subj = row['Subject']
                     if "Meal Break" in subj:
-                        row_style = "background-color: #fcf8e3; color: #8a6d3b; font-style: italic;"
+                        row_style = "background-color: #fffde7; color: #795548; font-style: italic;"
                     elif "Short Break" in subj:
-                        row_style = "background-color: #f4f4f4; color: #666666; font-style: italic;"
+                        row_style = "background-color: #fff8e1; color: #f57f17; font-style: italic;"
                     elif "Long Break" in subj:
-                        row_style = "background-color: #eef2f5; color: #444444; font-style: italic;"
+                        row_style = "background-color: #e0f2f1; color: #00796b; font-style: italic;"
                     else:
                         bg_color = color_map.get(subj, '#ffffff')
-                        row_style = f"background-color: {bg_color}; color: #222222; font-weight: 500;"
+                        row_style = f"background-color: {bg_color}; color: black;"
                         
                     rows_html += f"""
                     <tr style="{row_style}">
-                        <td style="white-space: pre-line; font-family: monospace; font-weight: bold;">{row['Time']}</td>
-                        <td style="font-weight: bold;">{row['Subject']}</td>
+                        <td>{row['Time']}</td>
+                        <td>{row['Subject']}</td>
                         <td>{row['Topic']}</td>
-                        <td style="text-align: center;">{row['Difficulty']}</td>
-                        <td style="text-align: center;">{row['Exam Date']}</td>
+                        <td>{row['Difficulty']}</td>
+                        <td>{row['Exam Date']}</td>
                     </tr>
                     """
                 
-                html_table = """
+                html_table = f"""
                 <!DOCTYPE html>
                 <html>
                 <head>
                 <style>
                     body {{
-                        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                        font-family: sans-serif;
                         margin: 0;
-                        padding: 10px;
-                        background-color: #ffffff;
-                    }}
-                    .timetable-card {{
-                        background: white;
-                        border-radius: 10px;
-                        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-                        border: 1px solid #e1e4e8;
-                        overflow: hidden;
-                        margin-bottom: 20px;
-                    }}
-                    .timetable-header {{
-                        background: #f8f9fa;
-                        padding: 15px 20px;
-                        border-bottom: 1px solid #e1e4e8;
-                    }}
-                    .timetable-header h2 {{
-                        margin: 0;
-                        color: #24292e;
-                        font-size: 18px;
+                        padding: 0;
                     }}
                     .custom-timetable {{
                         border-collapse: collapse;
-                        width: 100%;
+                        width: auto;
                         font-size: 14px;
                     }}
-                    .custom-timetable th {{
-                        background-color: #f1f3f5;
-                        color: #495057;
-                        font-weight: 600;
-                        text-transform: uppercase;
-                        font-size: 11px;
-                        letter-spacing: 0.5px;
-                        border-bottom: 2px solid #dee2e6;
-                        padding: 12px 16px;
+                    .custom-timetable th, .custom-timetable td {{
+                        border: 1px solid #ddd;
+                        padding: 8px 12px;
                         text-align: left;
+                        white-space: nowrap;
                     }}
-                    .custom-timetable td {{
-                        border-bottom: 1px solid #edf2f7;
-                        padding: 12px 16px;
-                        vertical-align: middle;
-                    }}
-                    .custom-timetable tr:hover {{
-                        filter: brightness(97%);
+                    .custom-timetable th {{
+                        background-color: #f0f2f6;
+                        font-weight: bold;
+                        color: #31333F;
                     }}
                 </style>
                 </head>
                 <body>
-                    <div class="timetable-card">
-                        <div class="timetable-header">
-                            <h2>🗓️ Master Study Schedule</h2>
-                        </div>
-                        <table class="custom-timetable">
-                            <thead>
-                                <tr>
-                                    <th style="width: 15%;">Time Slot</th>
-                                    <th style="width: 25%;">Subject</th>
-                                    <th style="width: 35%;">Topic</th>
-                                    <th style="width: 12%; text-align: center;">Difficulty</th>
-                                    <th style="width: 13%; text-align: center;">Exam Date</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {rows_html}
-                            </tbody>
-                        </table>
-                    </div>
+                    <table class="custom-timetable">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Subject</th>
+                                <th>Topic</th>
+                                <th>Difficulty</th>
+                                <th>Exam Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {rows_html}
+                        </tbody>
+                    </table>
                 </body>
                 </html>
-                """.format(rows_html=rows_html)
+                """
                 
-                calc_height = min(750, 120 + (len(df) * 48))
+                calc_height = min(600, 60 + (len(df) * 42))
                 components.html(html_table, height=calc_height, scrolling=True)
                 
-                csv_data = df.to_csv(index=False).encode('utf-8')
+                csv = df.to_csv(index=False).encode('utf-8')
                 st.download_button(
-                    label="📥 Download Timetable (Spreadsheet / PDF Ready)",
-                    data=csv_data,
-                    file_name="study_timetable.csv",
+                    label="📥 Download Timetable as CSV",
+                    data=csv,
+                    file_name="my_study_timetable.csv",
                     mime="text/csv",
-                    type="primary"
                 )
             else:
-                st.warning("Not enough available study slots to fit the required hours. Try widening your daily time window or increasing days!")
+                st.warning("Not enough available study slots to fit the required hours. Try widening your daily time window or increasing your total days!")
