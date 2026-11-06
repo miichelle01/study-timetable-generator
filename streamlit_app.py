@@ -267,44 +267,4 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                     difficulty=s["difficulty"], 
                     estimated_hours=s["estimated_hours"]
                 )
-                subject_dict[s_name]["topics"].append(topic_obj)
-                
-            student_subjects = []
-            for sub_name, data in subject_dict.items():
-                student_subjects.append(Subject(
-                    name=sub_name,
-                    exam_date=data["exam_date"],
-                    topics=data["topics"]
-                ))
-            
-            all_exam_dates = [s.exam_date for s in student_subjects]
-            earliest_exam = min(all_exam_dates) if all_exam_dates else date.today() + timedelta(days=7)
-            num_days = max(1, (earliest_exam - date.today()).days)
-                
-            schedule = generate_schedule(student_subjects, num_days, start_hour, end_hour, lunch_mins, short_break_mins, long_break_mins)
-            
-            results = []
-            for item in schedule:
-                results.append({
-                    "Time": item.time_str,
-                    "Subject": item.subject,
-                    "Topic": item.topic,
-                    "Difficulty": item.difficulty_str,
-                    "Exam Date": item.exam_date
-                })
-                    
-            if results:
-                df = pd.DataFrame(results)
-                st.success("Timetable generated successfully!")
-                
-                unique_subjects = [s for s in df['Subject'].unique() if not any(b in s for b in ["Break"])]
-                colors = ['#ffebee', '#e8f5e9', '#e3f2fd', '#fff3e0', '#f3e5f5', '#e0f7fa', '#fce4ec']
-                color_map = {subj: colors[i % len(colors)] for i, subj in enumerate(unique_subjects)}
-                
-                rows_html = ""
-                for _, row in df.iterrows():
-                    subj = row['Subject']
-                    if "Meal Break" in subj:
-                        row_style = "background-color: #fffde7; color: #795548; font-style: italic;"
-                    elif "Short Break" in subj:
-                        row_style = "background-color: #fff8e1; color: #f57f17
+                subject_dict
