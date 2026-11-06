@@ -205,7 +205,6 @@ for i in range(int(num_subjects)):
     st.sidebar.markdown(f"### Subject {i+1}")
     
     sub_name = st.sidebar.text_input(f"Subject Name {i+1}", key=f"sub_name_{i}")
-    # Explicitly allow dates up to 10 years in the future so it's never capped at Nov 30th
     ex_date = st.sidebar.date_input(
         f"Exam Date {i+1}", 
         value=date.today() + timedelta(days=30), 
@@ -242,4 +241,29 @@ st.subheader("Your Study Timetable")
 
 if st.button("🚀 Generate Your Timetable", type="primary"):
     if end_hour <= start_hour:
-        st.error("⚠️ Daily End Hour must be later than Daily
+        st.error("⚠️ Daily End Hour must be later than Daily Start Hour! Please adjust your sidebar settings.")
+    else:
+        all_combined_tasks = []
+        for sub_idx, topics in st.session_state.saved_subjects.items():
+            all_combined_tasks.extend(topics)
+            
+        if not all_combined_tasks:
+            st.warning("⚠️ Please make sure you filled out your subject details and clicked the **'Save Subject'** button in the sidebar before generating your timetable!")
+        else:
+            subject_dict = {}
+            for s in all_combined_tasks:
+                s_name = s["subject"]
+                if s_name not in subject_dict:
+                    subject_dict[s_name] = {
+                        "exam_date": s["exam_date"],
+                        "topics": []
+                    }
+                
+                topic_obj = Topic(
+                    name=s["topic"], 
+                    difficulty=s["difficulty"], 
+                    estimated_hours=s["estimated_hours"]
+                )
+                subject_dict[s_name]["topics"].append(topic_obj)
+                
+            student_subjects = []
