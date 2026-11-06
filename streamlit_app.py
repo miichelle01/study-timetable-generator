@@ -182,4 +182,34 @@ st.caption("##### *Plan better. Ace your exams.*")
 st.divider()  
 
 # Sidebar controls for availability & breaks
-st.sidebar.markdown("<h2 style='font-size:
+st.sidebar.markdown("<h2 style='font-size: 26px; font-weight: bold;'>Your Plan</h2>", unsafe_allow_html=True)
+
+start_hour = st.sidebar.slider("Daily Start Hour :", min_value=0, max_value=23, value=9)
+end_hour = st.sidebar.slider("Daily End Hour :", min_value=0, max_value=23, value=21)
+
+st.sidebar.divider()
+st.sidebar.header("Work with no play makes Jack a dull boy")
+lunch_mins = st.sidebar.slider("Meal Break :", min_value=30, max_value=60, value=45, step=5)
+short_break_mins = st.sidebar.slider("Short Break :", min_value=5, max_value=15, value=10, step=5)
+long_break_mins = st.sidebar.slider("Long Break :", min_value=15, max_value=30, value=20, step=5)
+
+st.sidebar.divider()
+st.sidebar.header("Your Subjects & Topics")
+
+if "saved_subjects" not in st.session_state:
+    st.session_state.saved_subjects = {}
+
+num_subjects = st.sidebar.number_input("How many subjects?", min_value=1, max_value=9, value=1, step=1, key="num_subjects_input")
+
+for i in range(int(num_subjects)):
+    st.sidebar.markdown(f"### Subject {i+1}")
+    
+    sub_name = st.sidebar.text_input(f"Subject Name {i+1}", key=f"sub_name_{i}")
+    ex_date = st.sidebar.date_input(f"Exam Date {i+1}", key=f"date_{i}")
+    num_topics = st.sidebar.number_input(f"How many topics for Subject {i+1}?", min_value=1, max_value=10, value=1, step=1, key=f"num_topics_{i}")
+    
+    with st.sidebar.form(key=f"subject_form_{i}"):
+        subject_topics = []
+        for j in range(int(num_topics)):
+            top_name = st.text_input(f"Topic Name {j+1}", key=f"top_name_{i}_{j}")
+            diff
