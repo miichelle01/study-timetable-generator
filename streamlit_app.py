@@ -205,8 +205,13 @@ for i in range(int(num_subjects)):
     st.sidebar.markdown(f"### Subject {i+1}")
     
     sub_name = st.sidebar.text_input(f"Subject Name {i+1}", key=f"sub_name_{i}")
-    # Unrestricted date picker allowing any date in the future
-    ex_date = st.sidebar.date_input(f"Exam Date {i+1}", key=f"date_{i}")
+    # Explicitly allow dates up to 10 years in the future so it's never capped at Nov 30th
+    ex_date = st.sidebar.date_input(
+        f"Exam Date {i+1}", 
+        value=date.today() + timedelta(days=30), 
+        max_value=date.today() + timedelta(days=3650),
+        key=f"date_{i}"
+    )
     num_topics = st.sidebar.number_input(f"How many topics for Subject {i+1}?", min_value=1, max_value=10, value=1, step=1, key=f"num_topics_{i}")
     
     with st.sidebar.form(key=f"subject_form_{i}"):
@@ -237,8 +242,4 @@ st.subheader("Your Study Timetable")
 
 if st.button("🚀 Generate Your Timetable", type="primary"):
     if end_hour <= start_hour:
-        st.error("⚠️ Daily End Hour must be later than Daily Start Hour! Please adjust your sidebar settings.")
-    else:
-        all_combined_tasks = []
-        for sub_idx, topics in st.session_state.saved_subjects.items():
-            all_combined_tasks
+        st.error("⚠️ Daily End Hour must be later than Daily
