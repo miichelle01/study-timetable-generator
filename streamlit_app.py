@@ -206,10 +206,4 @@ for i in range(int(num_subjects)):
     
     sub_name = st.sidebar.text_input(f"Subject Name {i+1}", key=f"sub_name_{i}")
     ex_date = st.sidebar.date_input(f"Exam Date {i+1}", key=f"date_{i}")
-    num_topics = st.sidebar.number_input(f"How many topics for Subject {i+1}?", min_value=1, max_value=10, value=1, step=1, key=f"num_topics_{i}")
-    
-    with st.sidebar.form(key=f"subject_form_{i}"):
-        subject_topics = []
-        for j in range(int(num_topics)):
-            top_name = st.text_input(f"Topic Name {j+1}", key=f"top_name_{i}_{j}")
-            diff
+    num_topics = st.sidebar.number_input(f"How many topics for Subject {i+1}?", min_value=1, max_value=10, value=1, step=1, key=
