@@ -222,4 +222,16 @@ for i in range(int(num_subjects)):
         for j in range(int(num_topics)):
             top_name = st.text_input(f"Topic Name {j+1}", key=f"top_name_{i}_{j}")
             diff = st.slider(f"Difficulty {j+1}", 1, 5, value=3, key=f"diff_{i}_{j}")
-            est_hours = st.number_input(f
+            est_hours = st.number_input(f"Hours {j+1}", min_value=1.0, max_value=4.0, value=1.0, step=1.0, key=f"hrs_{i}_{j}")
+            
+            if top_name:
+                subject_topics.append({
+                    "subject": sub_name,
+                    "topic": top_name,
+                    "difficulty": diff,
+                    "estimated_hours": est_hours,
+                    "exam_date": ex_date
+                })
+        
+        submitted = st.form_submit_button(f"Save Subject {i+1}")
+        if submitted and sub_name
