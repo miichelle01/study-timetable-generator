@@ -324,20 +324,4 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                     elif "Short Break" in subj:
                         row_style = "background-color: #fff8e1; color: #f57f17; font-style: italic;"
                     elif "Long Break" in subj:
-                        row_style = "background-color: #e0f2f1; color: #00796b; font-style: italic;"
-                    else:
-                        bg_color = color_map.get(subj, '#ffffff')
-                        row_style = f"background-color: {bg_color}; color: black;"
-                        
-                    rows_html += f"""
-                    <tr style="{row_style}">
-                        <td>{row['Time']}</td>
-                        <td>{row['Subject']}</td>
-                        <td>{row['Topic']}</td>
-                        <td>{row['Difficulty']}</td>
-                        <td>{row['Exam Date']}</td>
-                    </tr>
-                    """
-                
-                html_table = f"""
-                <!DOCTYPE html>
+                        row_style = "background-color: #e0f2f1;
