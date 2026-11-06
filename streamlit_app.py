@@ -154,31 +154,3 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                     continuous_study_hours = 0.0
             else:
                 hits_meal = (curr_hour == 13 or curr_hour == 19) or \
-                            (curr_hour == 12 and (curr_min + long_break_mins) >= 60) or \
-                            (curr_hour == 18 and (curr_min + long_break_mins) >= 60)
-
-                if continuous_study_hours > 2.0 and curr_hour < end_hour and pool_index < len(pool) and not hits_meal:
-                    l_start = f"{curr_hour:02d}:{curr_min:02d}"
-                    t_min = curr_min + long_break_mins
-                    curr_hour += t_min // 60
-                    curr_min = t_min % 60
-                    l_end = f"{curr_hour:02d}:{curr_min:02d}"
-                    
-                    schedule_items.append(ScheduleItem(
-                        time_str=f"{l_start}\n{l_end}",
-                        subject="Long Break",
-                        topic="",
-                        difficulty_str="",
-                        exam_date="",
-                        is_break=True
-                    ))
-                    continuous_study_hours = 0.0
-                    
-    return schedule_items
-
-# --- STREAMLIT UI ---
-st.title("📚 Study Timetable Generator 📚")
-st.caption("##### *Plan better. Ace your exams.*")
-st.divider()  
-
-# Sidebar controls for
