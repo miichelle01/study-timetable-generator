@@ -206,7 +206,7 @@ for i in range(int(num_subjects)):
     
     sub_name = st.sidebar.text_input(f"Subject Name {i+1}", key=f"sub_name_{i}")
     
-    # Original popup calendar date input with 5-year future extension enabled
+    # Original popup calendar date input with 5-year future range extension
     ex_date = st.sidebar.date_input(
         f"Exam Date {i+1}", 
         value=date.today() + timedelta(days=30),
@@ -298,21 +298,4 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                 df = pd.DataFrame(results)
                 st.success("Timetable generated successfully!")
                 
-                unique_subjects = [s for s in df['Subject'].unique() if not any(b in s for b in ["Break"])]
-                colors = ['#ffebee', '#e8f5e9', '#e3f2fd', '#fff3e0', '#f3e5f5', '#e0f7fa', '#fce4ec']
-                color_map = {subj: colors[i % len(colors)] for i, subj in enumerate(unique_subjects)}
-                
-                rows_html = ""
-                for _, row in df.iterrows():
-                    subj = row['Subject']
-                    if "Meal Break" in subj:
-                        row_style = "background-color: #fffde7; color: #795548; font-style: italic;"
-                    elif "Short Break" in subj:
-                        row_style = "background-color: #fff8e1; color: #f57f17; font-style: italic;"
-                    elif "Long Break" in subj:
-                        row_style = "background-color: #e0f2f1; color: #00796b; font-style: italic;"
-                    else:
-                        bg_color = color_map.get(subj, '#ffffff')
-                        row_style = f"background-color: {bg_color}; color: black;"
-                        
-                    rows_html += f"""
+                unique_subjects = [s for s
