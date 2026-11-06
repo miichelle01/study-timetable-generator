@@ -206,28 +206,14 @@ for i in range(int(num_subjects)):
     
     sub_name = st.sidebar.text_input(f"Subject Name {i+1}", key=f"sub_name_{i}")
     
-    # Seamless Dropdowns for Year, Month, and Day (No calendar grid restrictions)
-    st.sidebar.markdown(f"**Exam Date {i+1}**")
-    col_y, col_m, col_d = st.sidebar.columns(3)
-    with col_y:
-        exam_year = st.selectbox("Year", options=[2026, 2027, 2028, 2029, 2030], index=0, key=f"year_{i}")
-    with col_m:
-        months_dict = {
-            "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
-            "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
-        }
-        exam_month_name = st.selectbox("Month", options=list(months_dict.keys()), index=11, key=f"month_{i}")
-        exam_month = months_dict[exam_month_name]
-    with col_d:
-        exam_day = st.selectbox("Day", options=list(range(1, 32)), index=4, key=f"day_{i}")
-    
-    # Robust date assembly with safe fallback
-    try:
-        ex_date = date(exam_year, exam_month, exam_day)
-    except ValueError:
-        ex_date = date(exam_year, exam_month, 28)  # Fallback for shorter months like Feb
-        
-    st.sidebar.caption(f"Selected: {ex_date.strftime('%d %B %Y')}")
+    # Original popup calendar date input with 5-year future extension enabled
+    ex_date = st.sidebar.date_input(
+        f"Exam Date {i+1}", 
+        value=date.today() + timedelta(days=30),
+        min_value=date.today(),
+        max_value=date.today() + timedelta(days=1825), 
+        key=f"date_{i}"
+    )
     
     num_topics = st.sidebar.number_input(f"How many topics for Subject {i+1}?", min_value=1, max_value=10, value=1, step=1, key=f"num_topics_{i}")
     
@@ -249,4 +235,84 @@ for i in range(int(num_subjects)):
         
         submitted = st.form_submit_button(f"Save Subject {i+1}")
         if submitted and sub_name:
-            st.session_state
+            st.session_state.saved_subjects[i] = subject_topics
+            st.success(f"Saved {sub_name} for {ex_date.strftime('%d %b %Y')}!")
+    
+    st.sidebar.divider()
+
+# --- MAIN SCREEN TIMETABLE GENERATION ---
+st.subheader("Your Study Timetable")
+
+if st.button("🚀 Generate Your Timetable", type="primary"):
+    if end_hour <= start_hour:
+        st.error("⚠️ Daily End Hour must be later than Daily Start Hour! Please adjust your sidebar settings.")
+    else:
+        all_combined_tasks = []
+        for sub_idx, topics in st.session_state.saved_subjects.items():
+            all_combined_tasks.extend(topics)
+            
+        if not all_combined_tasks:
+            st.warning("⚠️ Please make sure you filled out your subject details and clicked the **'Save Subject'** button in the sidebar before generating your timetable!")
+        else:
+            subject_dict = {}
+            for s in all_combined_tasks:
+                s_name = s["subject"]
+                if s_name not in subject_dict:
+                    subject_dict[s_name] = {
+                        "exam_date": s["exam_date"],
+                        "topics": []
+                    }
+                
+                topic_obj = Topic(
+                    name=s["topic"], 
+                    difficulty=s["difficulty"], 
+                    estimated_hours=s["estimated_hours"]
+                )
+                subject_dict[s_name]["topics"].append(topic_obj)
+                
+            student_subjects = []
+            for sub_name, data in subject_dict.items():
+                student_subjects.append(Subject(
+                    name=sub_name,
+                    exam_date=data["exam_date"],
+                    topics=data["topics"]
+                ))
+            
+            all_exam_dates = [s.exam_date for s in student_subjects]
+            earliest_exam = min(all_exam_dates) if all_exam_dates else date.today() + timedelta(days=7)
+            num_days = max(1, (earliest_exam - date.today()).days)
+                
+            schedule = generate_schedule(student_subjects, num_days, start_hour, end_hour, lunch_mins, short_break_mins, long_break_mins)
+            
+            results = []
+            for item in schedule:
+                results.append({
+                    "Time": item.time_str,
+                    "Subject": item.subject,
+                    "Topic": item.topic,
+                    "Difficulty": item.difficulty_str,
+                    "Exam Date": item.exam_date
+                })
+                    
+            if results:
+                df = pd.DataFrame(results)
+                st.success("Timetable generated successfully!")
+                
+                unique_subjects = [s for s in df['Subject'].unique() if not any(b in s for b in ["Break"])]
+                colors = ['#ffebee', '#e8f5e9', '#e3f2fd', '#fff3e0', '#f3e5f5', '#e0f7fa', '#fce4ec']
+                color_map = {subj: colors[i % len(colors)] for i, subj in enumerate(unique_subjects)}
+                
+                rows_html = ""
+                for _, row in df.iterrows():
+                    subj = row['Subject']
+                    if "Meal Break" in subj:
+                        row_style = "background-color: #fffde7; color: #795548; font-style: italic;"
+                    elif "Short Break" in subj:
+                        row_style = "background-color: #fff8e1; color: #f57f17; font-style: italic;"
+                    elif "Long Break" in subj:
+                        row_style = "background-color: #e0f2f1; color: #00796b; font-style: italic;"
+                    else:
+                        bg_color = color_map.get(subj, '#ffffff')
+                        row_style = f"background-color: {bg_color}; color: black;"
+                        
+                    rows_html += f"""
