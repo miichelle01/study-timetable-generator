@@ -205,5 +205,40 @@ for i in range(int(num_subjects)):
     st.sidebar.markdown(f"### Subject {i+1}")
     
     sub_name = st.sidebar.text_input(f"Subject Name {i+1}", key=f"sub_name_{i}")
+    # Unrestricted date picker allowing any date in the future
     ex_date = st.sidebar.date_input(f"Exam Date {i+1}", key=f"date_{i}")
-    num_topics = st.sidebar.number_input(f"How many topics for Subject {i+1}?", min_value=1, max_value=10, value=1, step=1, key=
+    num_topics = st.sidebar.number_input(f"How many topics for Subject {i+1}?", min_value=1, max_value=10, value=1, step=1, key=f"num_topics_{i}")
+    
+    with st.sidebar.form(key=f"subject_form_{i}"):
+        subject_topics = []
+        for j in range(int(num_topics)):
+            top_name = st.text_input(f"Topic Name {j+1}", key=f"top_name_{i}_{j}")
+            diff = st.slider(f"Difficulty {j+1}", 1, 5, value=3, key=f"diff_{i}_{j}")
+            est_hours = st.number_input(f"Hours {j+1}", min_value=1.0, max_value=4.0, value=1.0, step=1.0, key=f"hrs_{i}_{j}")
+            
+            if top_name:
+                subject_topics.append({
+                    "subject": sub_name,
+                    "topic": top_name,
+                    "difficulty": diff,
+                    "estimated_hours": est_hours,
+                    "exam_date": ex_date
+                })
+        
+        submitted = st.form_submit_button(f"Save Subject {i+1}")
+        if submitted and sub_name:
+            st.session_state.saved_subjects[i] = subject_topics
+            st.success(f"Saved {sub_name} with {len(subject_topics)} topics!")
+    
+    st.sidebar.divider()
+
+# --- MAIN SCREEN TIMETABLE GENERATION ---
+st.subheader("Your Study Timetable")
+
+if st.button("🚀 Generate Your Timetable", type="primary"):
+    if end_hour <= start_hour:
+        st.error("⚠️ Daily End Hour must be later than Daily Start Hour! Please adjust your sidebar settings.")
+    else:
+        all_combined_tasks = []
+        for sub_idx, topics in st.session_state.saved_subjects.items():
+            all_combined_tasks
