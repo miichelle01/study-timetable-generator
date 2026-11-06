@@ -206,7 +206,7 @@ for i in range(int(num_subjects)):
     
     sub_name = st.sidebar.text_input(f"Subject Name {i+1}", key=f"sub_name_{i}")
     
-    # Seamless Dropdowns for Year, Month, and Day (No calendar grid limits)
+    # Seamless Dropdowns for Year, Month, and Day (No calendar grid restrictions)
     st.sidebar.markdown(f"**Exam Date {i+1}**")
     col_y, col_m, col_d = st.sidebar.columns(3)
     with col_y:
@@ -252,4 +252,92 @@ for i in range(int(num_subjects)):
             st.session_state.saved_subjects[i] = subject_topics
             st.success(f"Saved {sub_name} for {ex_date.strftime('%d %b %Y')}!")
     
-    st.
+    st.sidebar.divider()
+
+# --- MAIN SCREEN TIMETABLE GENERATION ---
+st.subheader("Your Study Timetable")
+
+if st.button("🚀 Generate Your Timetable", type="primary"):
+    if end_hour <= start_hour:
+        st.error("⚠️ Daily End Hour must be later than Daily Start Hour! Please adjust your sidebar settings.")
+    else:
+        all_combined_tasks = []
+        for sub_idx, topics in st.session_state.saved_subjects.items():
+            all_combined_tasks.extend(topics)
+            
+        if not all_combined_tasks:
+            st.warning("⚠️ Please make sure you filled out your subject details and clicked the **'Save Subject'** button in the sidebar before generating your timetable!")
+        else:
+            subject_dict = {}
+            for s in all_combined_tasks:
+                s_name = s["subject"]
+                if s_name not in subject_dict:
+                    subject_dict[s_name] = {
+                        "exam_date": s["exam_date"],
+                        "topics": []
+                    }
+                
+                topic_obj = Topic(
+                    name=s["topic"], 
+                    difficulty=s["difficulty"], 
+                    estimated_hours=s["estimated_hours"]
+                )
+                subject_dict[s_name]["topics"].append(topic_obj)
+                
+            student_subjects = []
+            for sub_name, data in subject_dict.items():
+                student_subjects.append(Subject(
+                    name=sub_name,
+                    exam_date=data["exam_date"],
+                    topics=data["topics"]
+                ))
+            
+            all_exam_dates = [s.exam_date for s in student_subjects]
+            earliest_exam = min(all_exam_dates) if all_exam_dates else date.today() + timedelta(days=7)
+            num_days = max(1, (earliest_exam - date.today()).days)
+                
+            schedule = generate_schedule(student_subjects, num_days, start_hour, end_hour, lunch_mins, short_break_mins, long_break_mins)
+            
+            results = []
+            for item in schedule:
+                results.append({
+                    "Time": item.time_str,
+                    "Subject": item.subject,
+                    "Topic": item.topic,
+                    "Difficulty": item.difficulty_str,
+                    "Exam Date": item.exam_date
+                })
+                    
+            if results:
+                df = pd.DataFrame(results)
+                st.success("Timetable generated successfully!")
+                
+                unique_subjects = [s for s in df['Subject'].unique() if not any(b in s for b in ["Break"])]
+                colors = ['#ffebee', '#e8f5e9', '#e3f2fd', '#fff3e0', '#f3e5f5', '#e0f7fa', '#fce4ec']
+                color_map = {subj: colors[i % len(colors)] for i, subj in enumerate(unique_subjects)}
+                
+                rows_html = ""
+                for _, row in df.iterrows():
+                    subj = row['Subject']
+                    if "Meal Break" in subj:
+                        row_style = "background-color: #fffde7; color: #795548; font-style: italic;"
+                    elif "Short Break" in subj:
+                        row_style = "background-color: #fff8e1; color: #f57f17; font-style: italic;"
+                    elif "Long Break" in subj:
+                        row_style = "background-color: #e0f2f1; color: #00796b; font-style: italic;"
+                    else:
+                        bg_color = color_map.get(subj, '#ffffff')
+                        row_style = f"background-color: {bg_color}; color: black;"
+                        
+                    rows_html += f"""
+                    <tr style="{row_style}">
+                        <td>{row['Time']}</td>
+                        <td>{row['Subject']}</td>
+                        <td>{row['Topic']}</td>
+                        <td>{row['Difficulty']}</td>
+                        <td>{row['Exam Date']}</td>
+                    </tr>
+                    """
+                
+                html_table = f"""
+                <!DOCTYPE html>
