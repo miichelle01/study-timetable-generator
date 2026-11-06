@@ -206,7 +206,7 @@ for i in range(int(num_subjects)):
     
     sub_name = st.sidebar.text_input(f"Subject Name {i+1}", key=f"sub_name_{i}")
     
-    # Original popup calendar date input with 5-year future range extension
+    # Standard calendar popup date_input restored with 5-year range
     ex_date = st.sidebar.date_input(
         f"Exam Date {i+1}", 
         value=date.today() + timedelta(days=30),
@@ -265,4 +265,38 @@ if st.button("🚀 Generate Your Timetable", type="primary"):
                 
                 topic_obj = Topic(
                     name=s["topic"], 
-                    difficulty=s["difficulty
+                    difficulty=s["difficulty"], 
+                    estimated_hours=s["estimated_hours"]
+                )
+                subject_dict[s_name]["topics"].append(topic_obj)
+                
+            student_subjects = []
+            for sub_name, data in subject_dict.items():
+                student_subjects.append(Subject(
+                    name=sub_name,
+                    exam_date=data["exam_date"],
+                    topics=data["topics"]
+                ))
+            
+            all_exam_dates = [s.exam_date for s in student_subjects]
+            earliest_exam = min(all_exam_dates) if all_exam_dates else date.today() + timedelta(days=7)
+            num_days = max(1, (earliest_exam - date.today()).days)
+                
+            schedule = generate_schedule(student_subjects, num_days, start_hour, end_hour, lunch_mins, short_break_mins, long_break_mins)
+            
+            results = []
+            for item in schedule:
+                results.append({
+                    "Time": item.time_str,
+                    "Subject": item.subject,
+                    "Topic": item.topic,
+                    "Difficulty": item.difficulty_str,
+                    "Exam Date": item.exam_date
+                })
+                    
+            if results:
+                df = pd.DataFrame(results)
+                st.success("Timetable generated successfully!")
+                
+                unique_subjects = [s for s in df['Subject'].unique() if not any(b in s for b in ["Break"])]
+                colors = ['#
