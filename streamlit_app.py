@@ -234,7 +234,7 @@ for i in range(int(num_subjects)):
 # --- MAIN SCREEN TIMETABLE GENERATION ---
 st.subheader("Your Study Timetable")
 
-if st.button("🚀 Generate Your Timetable", type="primary"):
+if st.button("Generate Your Timetable", type="primary"):
     if end_hour <= start_hour:
         st.error("⚠️ Daily End Hour must be later than Daily Start Hour! Please adjust your sidebar settings.")
     else:
