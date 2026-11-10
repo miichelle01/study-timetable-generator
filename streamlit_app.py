@@ -101,39 +101,3 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
             start_t = f"{curr_hour:02d}:{curr_min:02d}"
             total_minutes_start = curr_hour * 60 + curr_min
             total_minutes_end = int(total_minutes_start + (work_hours * 60))
-            
-            target_meal = 13 if (curr_hour < 13) else (19 if (curr_hour < 19 and curr_hour >= 13) else None)
-            if target_meal and total_minutes_end > (target_meal * 60):
-                total_minutes_end = target_meal * 60
-                work_hours = max(0.0, (total_minutes_end - total_minutes_start) / 60.0)
-                if work_hours == 0:
-                    curr_hour = target_meal
-                    curr_min = 0
-                    continue
-
-            curr_hour = total_minutes_end // 60
-            curr_min = total_minutes_end % 60
-            end_t = f"{curr_hour:02d}:{curr_min:02d}"
-            
-            schedule_items.append(ScheduleItem(
-                time_str=f"{start_t}\n{end_t}",
-                subject=subject_name,
-                topic=topic_name,
-                difficulty_str=diff_stars,
-                exam_date=exam_date_str,
-                is_break=False
-            ))
-            
-            current_topic_hours_left -= work_hours
-            continuous_study_hours += work_hours
-
-            if current_topic_hours_left <= 0:
-                pool_index += 1
-                if pool_index < len(pool):
-                    current_topic_hours_left = pool[pool_index]["topic"].estimated_hours
-                
-                hits_meal = (curr_hour == 13 or curr_hour == 19) or \
-                            (curr_hour == 12 and (curr_min + short_break_mins) >= 60) or \
-                            (curr_hour == 18 and (curr_min + short_break_mins) >= 60)
-
-                if pool_index < len(pool) and curr_hour < end_hour and not hits
