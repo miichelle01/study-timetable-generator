@@ -136,12 +136,4 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
                             (curr_hour == 12 and (curr_min + short_break_mins) >= 60) or \
                             (curr_hour == 18 and (curr_min + short_break_mins) >= 60)
 
-                if pool_index < len(pool) and curr_hour < end_hour and not hits_meal:
-                    s_start = f"{curr_hour:02d}:{curr_min:02d}"
-                    t_min = curr_min + short_break_mins
-                    curr_hour += t_min // 60
-                    curr_min = t_min % 60
-                    s_end = f"{curr_hour:02d}:{curr_min:02d}"
-                    
-                    schedule_items.append(ScheduleItem(
-                        time_str=f"{s_start}\n{s_end}",
+                if pool_index < len(pool) and curr_hour < end_hour and not hits
