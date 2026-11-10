@@ -99,5 +99,4 @@ def generate_schedule(subjects: List[Subject], num_days: int, start_hour: int, e
             work_hours = min(current_topic_hours_left, available_slot_hours)
             
             start_t = f"{curr_hour:02d}:{curr_min:02d}"
-            total_minutes_start = curr_hour * 60 + curr_min
-            total_minutes_end = int(total_minutes_start + (work_hours * 60))
+            total_minutes
